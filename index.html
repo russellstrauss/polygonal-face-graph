@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Polygonal Face Graph</title>
+	
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+	<link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="assets/sass/main.css">
+	
+</head>
+<body>
+	
+	<div class="container"></div>
+	<div id="message"></div>
+	<div id="legend">
+		<span class="legend-title">Controls</span>
+		<div class="backdrop">
+			<table>
+				<thead>
+					<tr class="divider">
+						<td>Function</td>
+						<td>Key</td>
+					</tr>
+				</thead>
+				<!-- <tr>
+					<td>Reset</td>
+					<td>Esc</td>
+				</tr> -->
+				<tr class="divider">
+					<td>Rotate</td>
+					<td>left click</td>
+				</tr>
+				<tr>
+					<td>Pan</td>
+					<td>right click</td>
+				</tr>
+				<tr>
+					<td>Zoom</td>
+					<td>scroll</td>
+				</tr>
+			</table>
+		</div>
+	</div>
+	
+	<div id="author">
+		<div class="column description">
+			Code Author: Russell Strauss <br>
+			CS 6491 Fundamentals of Computer Graphics<br>
+			Taught by Jarek Rossinac<br>
+			Georgia Insitute of Technology<br>
+			Fall 2019
+		</div>
+		<div class="column">
+			<div id="portrait">
+				<img src="assets/img/portrait.jpg" alt="">
+			</div>
+		</div>
+	</div>
+	
+	<script src="assets/vendors/js/three.js/build/three.js"></script>
+	<script src="assets/vendors/js/three.js/examples/js/controls/OrbitControls.js"></script>
+	<script src="assets/vendors/js/three.js/examples/js/libs/stats.min.js"></script>
+	<script src="assets/js/bundle.js"></script>
+</body>
+</html>

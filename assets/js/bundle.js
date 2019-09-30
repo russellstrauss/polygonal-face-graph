@@ -2,7 +2,9 @@
 "use strict";
 
 module.exports = function () {
-  var renderer, scene, camera, controls;
+  var renderer, scene, camera, controls, floor;
+  var raycaster = new THREE.Raycaster();
+  var mouse = new THREE.Vector2();
   var stats = new Stats();
   var wireframeMaterial = new THREE.MeshBasicMaterial({
     wireframe: true,
@@ -14,6 +16,8 @@ module.exports = function () {
     opacity: .5,
     transparent: true
   });
+  var adding = false;
+  var black = new THREE.Color('black');
   var arrowHelper;
   return {
     settings: {
@@ -27,19 +31,19 @@ module.exports = function () {
     init: function init() {
       var self = this;
       self.loadFont();
-      self.setUpButtons();
     },
     begin: function begin() {
       var self = this;
       scene = gfx.setUpScene(scene);
       renderer = gfx.setUpRenderer(renderer);
       camera = gfx.setUpCamera(camera);
-      gfx.addFloor(scene);
+      floor = gfx.addFloor(scene);
       gfx.enableStats(stats);
       controls = gfx.enableControls(controls, renderer, camera);
       gfx.resizeRendererOnWindowResize(renderer, camera);
       gfx.setUpLights(scene);
       gfx.setCameraLocation(camera, self.settings.defaultCameraLocation);
+      self.setUpButtons();
 
       var animate = function animate() {
         requestAnimationFrame(animate);
@@ -71,17 +75,47 @@ module.exports = function () {
         self.begin();
       });
     },
+    addPoint: function addPoint(event) {
+      event.preventDefault();
+      raycaster.setFromCamera(mouse, camera);
+      var objects = [];
+      objects.push(floor);
+      var intersects = raycaster.intersectObjects(objects, true);
+
+      if (intersects.length > 0) {
+        intersects[0].point.set(intersects[0].point.x, 0, intersects[0].point.z);
+        gfx.showPoint(intersects[0].point, scene, black);
+        return intersects[0].point;
+      }
+    },
     setUpButtons: function setUpButtons() {
       var self = this;
       var message = document.getElementById('message');
+      var esc = 27;
+      var A = 65;
+      document.addEventListener('keydown', function (event) {
+        if (event.keyCode === A) {
+          adding = true;
+          controls.enabled = false;
+        }
+      });
       document.addEventListener('keyup', function (event) {
-        var esc = 27; // if (event.keyCode === esc) {
-        // 	gfx.resetScene(self, scene);
-        // 	message.textContent = 'Reset scene';
-        // 	setTimeout(function() {
-        // 		message.textContent = '';
-        // 	}, self.settings.messageDuration);
-        // }
+        if (event.keyCode === A) {
+          adding = false;
+          controls.enabled = true;
+        }
+      });
+
+      var onMouseMove = function onMouseMove(event) {
+        mouse.x = event.clientX / window.innerWidth * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+      };
+
+      window.addEventListener('mousemove', onMouseMove, false);
+      document.querySelector('canvas').addEventListener('click', function (event) {
+        if (adding) {
+          self.addPoint(event);
+        }
       });
     }
   };
@@ -124,7 +158,7 @@ module.exports = function () {
         }
       },
       addFloor: function addFloor(scene) {
-        var planeGeometry = new THREE.PlaneBufferGeometry(100, 100);
+        var planeGeometry = new THREE.PlaneBufferGeometry(1000, 1000);
         planeGeometry.rotateX(-Math.PI / 2);
         var planeMaterial = new THREE.ShadowMaterial({
           opacity: 0.2
@@ -137,6 +171,7 @@ module.exports = function () {
         helper.material.opacity = .25;
         helper.material.transparent = true;
         scene.add(helper);
+        return plane;
       },
       createVector: function createVector(pt1, pt2) {
         return new THREE.Vector3(pt2.x - pt1.x, pt2.y - pt1.y, pt2.z - pt1.z);

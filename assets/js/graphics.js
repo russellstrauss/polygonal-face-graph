@@ -41,7 +41,7 @@
 
 			addFloor: function(scene) {
 
-				var planeGeometry = new THREE.PlaneBufferGeometry(100, 100);
+				var planeGeometry = new THREE.PlaneBufferGeometry(1000, 1000);
 				planeGeometry.rotateX(-Math.PI / 2);
 				var planeMaterial = new THREE.ShadowMaterial({ opacity: 0.2 });
 	
@@ -54,6 +54,8 @@
 				helper.material.opacity = .25;
 				helper.material.transparent = true;
 				scene.add(helper);
+				
+				return plane;
 			},
 
 			createVector: function(pt1, pt2) {

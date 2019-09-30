@@ -2,15 +2,10 @@ module.exports = function() {
 	
 	var renderer, scene, camera, controls, floor;
 	var raycaster = new THREE.Raycaster();
+	var polyloop = [];
 	var mouse = new THREE.Vector2();
 	var stats = new Stats();
 	var wireframeMaterial = new THREE.MeshBasicMaterial({ wireframe: true, color: 0x08CDFA });
-	var shadeMaterial = new THREE.MeshPhongMaterial({
-		color: 0x08CDFA,
-		side: THREE.DoubleSide,
-		opacity: .5,
-		transparent: true
-	});
 	var adding = false;
 	var black = new THREE.Color('black');
 	var arrowHelper;
@@ -19,9 +14,9 @@ module.exports = function() {
 		
 		settings: {
 			defaultCameraLocation: {
-				x: -20,
-				y: 20,
-				z: 20
+				x: 0,
+				y: 75,
+				z: 0
 			},
 			messageDuration: 2000
 		},
@@ -98,8 +93,31 @@ module.exports = function() {
 			if (intersects.length > 0) {
 				intersects[0].point.set(intersects[0].point.x, 0, intersects[0].point.z);
 				gfx.showPoint(intersects[0].point, scene, black);
+				polyloop.push(intersects[0].point);
+				
+				if (polyloop.length > 1) this.addLine(polyloop[polyloop.length - 2], polyloop[polyloop.length - 1]);
+				
 				return intersects[0].point;
 			}
+		},
+		
+		
+		addLine: function(pt1, pt2) {
+			
+			var lineDashedMaterial = new THREE.LineDashedMaterial({
+				color: 0x000000,
+				linewidth: 1,
+				scale: 1,
+				dashSize: 1,
+				gapSize: 1,
+			});
+			//let material = new THREE.LineBasicMaterial( { color: 0x0000ff } );
+			let geometry = new THREE.Geometry();
+			geometry.vertices.push(new THREE.Vector3( pt1.x, pt1.y, pt1.z) );
+			geometry.vertices.push(new THREE.Vector3( pt2.x, pt2.y, pt2.z) );
+			let line = new THREE.Line( geometry, lineDashedMaterial );
+			line.computeLineDistances();
+			scene.add( line );
 		},
 		
 		setUpButtons: function() {

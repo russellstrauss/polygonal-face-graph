@@ -5,6 +5,7 @@ module.exports = function () {
   var renderer, scene, camera, controls, floor;
   var raycaster = new THREE.Raycaster();
   var black = new THREE.Color('black');
+  var white = new THREE.Color('white');
   var green = new THREE.Color(0x00ff00);
   var blackMaterial = new THREE.MeshBasicMaterial({
     color: black
@@ -30,7 +31,12 @@ module.exports = function () {
         z: 0
       },
       messageDuration: 2000,
-      arrowHeadSize: 1.5
+      arrowHeadSize: 1.5,
+      colors: {
+        worldColor: black,
+        gridColor: green,
+        arrowColor: white
+      }
     },
     init: function init() {
       var self = this;
@@ -41,7 +47,7 @@ module.exports = function () {
       scene = gfx.setUpScene(scene);
       renderer = gfx.setUpRenderer(renderer);
       camera = gfx.setUpCamera(camera);
-      floor = gfx.addFloor(scene);
+      floor = gfx.addFloor(scene, this.settings.colors.worldColor, this.settings.colors.gridColor);
       gfx.enableStats(stats);
       controls = gfx.enableControls(controls, renderer, camera);
       gfx.resizeRendererOnWindowResize(renderer, camera);
@@ -108,7 +114,7 @@ module.exports = function () {
         }
 
         if (typeof arrows[arrows.length - 1].start !== 'undefined' && typeof arrows[arrows.length - 1].end !== 'undefined') {
-          gfx.drawLine(arrows[arrows.length - 1].start, arrows[arrows.length - 1].end, scene, green); // Draw a triangle on the end
+          gfx.drawLine(arrows[arrows.length - 1].start, arrows[arrows.length - 1].end, scene, this.settings.colors.arrowColor); // Draw a triangle on the end
 
           var arrowDirection = gfx.createVector(arrows[arrows.length - 1].start, arrows[arrows.length - 1].end);
           arrowDirection.setLength(this.settings.arrowHeadSize);
@@ -121,7 +127,10 @@ module.exports = function () {
           arrowNormal = arrowNormal.clone().applyAxisAngle(axis, Math.PI);
           var right = gfx.movePoint(arrows[arrows.length - 1].end.clone(), arrowNormal);
           var arrowHeadGeometry = gfx.createTriangle(tip, left, right);
-          var arrowHeadMesh = new THREE.Mesh(arrowHeadGeometry, greenMaterial);
+          var arrowMaterial = new THREE.MeshBasicMaterial({
+            color: this.settings.colors.arrowColor
+          });
+          var arrowHeadMesh = new THREE.Mesh(arrowHeadGeometry, arrowMaterial);
           scene.add(arrowHeadMesh);
         }
       }
@@ -226,7 +235,7 @@ module.exports = function () {
           scene.add(helper);
         }
       },
-      addFloor: function addFloor(scene) {
+      addFloor: function addFloor(scene, worldColor, gridColor) {
         var planeGeometry = new THREE.PlaneBufferGeometry(1000, 1000);
         planeGeometry.rotateX(-Math.PI / 2);
         var planeMaterial = new THREE.ShadowMaterial();
@@ -234,11 +243,11 @@ module.exports = function () {
         plane.position.y = -1;
         plane.receiveShadow = true;
         scene.add(plane);
-        var helper = new THREE.GridHelper(1000, 100, 0x00ff00, 0x00ff00);
+        var helper = new THREE.GridHelper(1000, 100, gridColor, gridColor);
         helper.material.opacity = .6;
         helper.material.transparent = true;
         scene.add(helper);
-        scene.background = new THREE.Color('black');
+        scene.background = worldColor;
         scene.fog = new THREE.FogExp2(new THREE.Color('black'), 0.004);
         return plane;
       },

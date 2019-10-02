@@ -3,6 +3,7 @@ module.exports = function() {
 	var renderer, scene, camera, controls, floor;
 	var raycaster = new THREE.Raycaster();
 	var black = new THREE.Color('black');
+	var white = new THREE.Color('white');
 	var green = new THREE.Color(0x00ff00);
 	var blackMaterial = new THREE.MeshBasicMaterial({ color: black });
 	var greenMaterial = new THREE.MeshBasicMaterial({ color: green });
@@ -23,7 +24,12 @@ module.exports = function() {
 				z: 0
 			},
 			messageDuration: 2000,
-			arrowHeadSize: 1.5
+			arrowHeadSize: 1.5,
+			colors: {
+				worldColor: black,
+				gridColor: green,
+				arrowColor: white
+			}
 		},
 		
 		init: function() {
@@ -39,7 +45,7 @@ module.exports = function() {
 			scene = gfx.setUpScene(scene);
 			renderer = gfx.setUpRenderer(renderer);
 			camera = gfx.setUpCamera(camera);
-			floor = gfx.addFloor(scene);
+			floor = gfx.addFloor(scene, this.settings.colors.worldColor, this.settings.colors.gridColor);
 			gfx.enableStats(stats);
 			controls = gfx.enableControls(controls, renderer, camera);
 			gfx.resizeRendererOnWindowResize(renderer, camera);
@@ -117,7 +123,7 @@ module.exports = function() {
 				}
 				
 				if (typeof arrows[arrows.length - 1].start !== 'undefined' && typeof arrows[arrows.length - 1].end !== 'undefined') {
-					gfx.drawLine(arrows[arrows.length - 1].start, arrows[arrows.length - 1].end, scene, green);
+					gfx.drawLine(arrows[arrows.length - 1].start, arrows[arrows.length - 1].end, scene, this.settings.colors.arrowColor);
 					
 					// Draw a triangle on the end
 					let arrowDirection = gfx.createVector(arrows[arrows.length - 1].start, arrows[arrows.length - 1].end);
@@ -130,7 +136,8 @@ module.exports = function() {
 					arrowNormal = arrowNormal.clone().applyAxisAngle(axis, Math.PI);
 					let right = gfx.movePoint(arrows[arrows.length - 1].end.clone(), arrowNormal);
 					let arrowHeadGeometry = gfx.createTriangle(tip, left, right);
-					let arrowHeadMesh = new THREE.Mesh(arrowHeadGeometry, greenMaterial);
+					let arrowMaterial = new THREE.MeshBasicMaterial({ color: this.settings.colors.arrowColor });
+					let arrowHeadMesh = new THREE.Mesh(arrowHeadGeometry, arrowMaterial);
 					scene.add(arrowHeadMesh);
 				}
 			}

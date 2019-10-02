@@ -274,6 +274,8 @@
 				});
 				let dot = new THREE.Points(dotGeometry, dotMaterial);
 				scene.add(dot);
+				
+				return dot;
 			},
 
 			showVector: function(vector, origin, scene, color) {
@@ -301,7 +303,7 @@
 				
 				color = color || 0x0000ff;
 				
-				let material = new THREE.LineBasicMaterial({ color: 0x0000ff });
+				let material = new THREE.LineBasicMaterial({ color: color });
 				let geometry = new THREE.Geometry();
 				geometry.vertices.push(new THREE.Vector3(pt1.x, pt1.y, pt1.z));
 				geometry.vertices.push(new THREE.Vector3(pt2.x, pt2.y, pt2.z));

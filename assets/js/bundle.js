@@ -4,6 +4,10 @@
 module.exports = function () {
   var renderer, scene, camera, controls, floor;
   var raycaster = new THREE.Raycaster();
+  var black = new THREE.Color('black');
+  var blackMaterial = new THREE.MeshBasicMaterial({
+    color: black
+  });
   var arrows = [];
   var mouse = new THREE.Vector2();
   var stats = new Stats();
@@ -12,8 +16,8 @@ module.exports = function () {
     color: 0x08CDFA
   });
   var adding = false;
-  var black = new THREE.Color('black');
   var arrowHelper;
+  var previousArrowPoint;
   return {
     settings: {
       defaultCameraLocation: {
@@ -21,7 +25,8 @@ module.exports = function () {
         y: 75,
         z: 0
       },
-      messageDuration: 2000
+      messageDuration: 2000,
+      arrowHeadSize: 1.5
     },
     init: function init() {
       var self = this;
@@ -86,23 +91,35 @@ module.exports = function () {
         // if point clicked intersects with floor
         intersects[0].point.set(intersects[0].point.x, 0, intersects[0].point.z);
         var clickedPoint = intersects[0].point;
-        gfx.showPoint(clickedPoint, scene, black);
 
-        if (arrows.length === 0) {
-          arrows.push([clickedPoint, undefined]);
-        } else if (arrows.length !== 0 && typeof arrows[arrows.length - 1][1] === 'undefined') {
-          arrows[arrows.length - 1][1] = clickedPoint;
+        if (arrows.length !== 0 && typeof arrows[arrows.length - 1].end === 'undefined') {
+          if (previousArrowPoint) scene.remove(previousArrowPoint);
+          arrows[arrows.length - 1].end = clickedPoint;
         } else {
-          arrows.push([clickedPoint, undefined]);
+          previousArrowPoint = gfx.showPoint(clickedPoint, scene, black);
+          arrows.push({
+            start: clickedPoint,
+            end: undefined
+          });
         }
 
-        console.log(arrows);
+        if (typeof arrows[arrows.length - 1].start !== 'undefined' && typeof arrows[arrows.length - 1].end !== 'undefined') {
+          gfx.drawLine(arrows[arrows.length - 1].start, arrows[arrows.length - 1].end, scene, black); // Draw a triangle on the end
 
-        if (typeof arrows[arrows.length - 1][0] !== 'undefined' && typeof arrows[arrows.length - 1][1] !== 'undefined') {
-          gfx.drawLine(arrows[arrows.length - 1][0], arrows[arrows.length - 1][1], scene);
+          var arrowDirection = gfx.createVector(arrows[arrows.length - 1].start, arrows[arrows.length - 1].end);
+          arrowDirection.setLength(this.settings.arrowHeadSize);
+          var tip = gfx.movePoint(arrows[arrows.length - 1].end.clone(), arrowDirection);
+          var axis = new THREE.Vector3(0, 1, 0); // rotate a vector around y
+
+          var arrowNormal = arrowDirection.clone().applyAxisAngle(axis, Math.PI / 2);
+          arrowNormal.setLength(arrowNormal.length() / 2);
+          var left = gfx.movePoint(arrows[arrows.length - 1].end.clone(), arrowNormal);
+          arrowNormal = arrowNormal.clone().applyAxisAngle(axis, Math.PI);
+          var right = gfx.movePoint(arrows[arrows.length - 1].end.clone(), arrowNormal);
+          var arrowHeadGeometry = gfx.createTriangle(tip, left, right);
+          var arrowHeadMesh = new THREE.Mesh(arrowHeadGeometry, blackMaterial);
+          scene.add(arrowHeadMesh);
         }
-
-        return intersects[0].point;
       }
     },
     addLine: function addLine(pt1, pt2) {
@@ -389,6 +406,7 @@ module.exports = function () {
         });
         var dot = new THREE.Points(dotGeometry, dotMaterial);
         scene.add(dot);
+        return dot;
       },
       showVector: function showVector(vector, origin, scene, color) {
         color = color || 0xff0000;
@@ -414,7 +432,7 @@ module.exports = function () {
       drawLine: function drawLine(pt1, pt2, scene, color) {
         color = color || 0x0000ff;
         var material = new THREE.LineBasicMaterial({
-          color: 0x0000ff
+          color: color
         });
         var geometry = new THREE.Geometry();
         geometry.vertices.push(new THREE.Vector3(pt1.x, pt1.y, pt1.z));

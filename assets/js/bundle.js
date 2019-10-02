@@ -39,6 +39,7 @@ module.exports = function () {
       gfx.setUpLights(scene);
       gfx.setCameraLocation(camera, self.settings.defaultCameraLocation);
       self.setUpButtons();
+      self.sandbox();
 
       var animate = function animate() {
         requestAnimationFrame(animate);
@@ -48,6 +49,11 @@ module.exports = function () {
       };
 
       animate();
+    },
+    sandbox: function sandbox() {
+      var line1 = this.addLine(new THREE.Vector3(-30, 0, -30), new THREE.Vector3(30, 0, 30));
+      var line2 = this.addLine(new THREE.Vector3(-30, 0, 30), new THREE.Vector3(30, 0, -30));
+      this.intersection(line1, line2);
     },
     loadFont: function loadFont() {
       var self = this;
@@ -92,14 +98,18 @@ module.exports = function () {
         scale: 1,
         dashSize: 1,
         gapSize: 1
-      }); //let material = new THREE.LineBasicMaterial( { color: 0x0000ff } );
-
+      });
+      var lineMaterial = new THREE.LineBasicMaterial({
+        color: 0x000000
+      });
       var geometry = new THREE.Geometry();
-      geometry.vertices.push(new THREE.Vector3(pt1.x, pt1.y, pt1.z));
-      geometry.vertices.push(new THREE.Vector3(pt2.x, pt2.y, pt2.z));
-      var line = new THREE.Line(geometry, lineDashedMaterial);
-      line.computeLineDistances();
+      geometry.vertices.push(pt1);
+      geometry.vertices.push(pt2);
+      var line = new THREE.Line(geometry, lineMaterial);
+      line.computeLineDistances(); // needed for dash material
+
       scene.add(line);
+      return line;
     },
     setUpButtons: function setUpButtons() {
       var self = this;
@@ -130,6 +140,17 @@ module.exports = function () {
           self.addPoint(event);
         }
       });
+    },
+    intersection: function intersection(line1, line2) {
+      var pt1 = line1.geometry.vertices[0];
+      var pt2 = line1.geometry.vertices[1];
+      var pt3 = line2.geometry.vertices[0];
+      var pt4 = line2.geometry.vertices[1];
+      var lerpLine1 = ((pt4.x - pt3.x) * (pt1.z - pt3.z) - (pt4.z - pt3.z) * (pt1.x - pt3.x)) / ((pt4.z - pt3.z) * (pt2.x - pt1.x) - (pt4.x - pt3.x) * (pt2.z - pt1.z));
+      var lerpLine2 = ((pt2.x - pt1.x) * (pt1.z - pt3.z) - (pt2.z - pt1.z) * (pt1.x - pt3.x)) / ((pt4.z - pt3.z) * (pt2.x - pt1.x) - (pt4.x - pt3.x) * (pt2.z - pt1.z));
+      var x = pt1.x + lerpLine1 * (pt2.x - pt1.x);
+      var z = pt1.z + lerpLine1 * (pt2.z - pt1.z);
+      gfx.showPoint(new THREE.Vector3(x, 0, z), scene);
     }
   };
 };

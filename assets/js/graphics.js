@@ -43,17 +43,19 @@
 
 				var planeGeometry = new THREE.PlaneBufferGeometry(1000, 1000);
 				planeGeometry.rotateX(-Math.PI / 2);
-				var planeMaterial = new THREE.ShadowMaterial({ opacity: 0.2 });
+				var planeMaterial = new THREE.ShadowMaterial();
 	
 				var plane = new THREE.Mesh(planeGeometry, planeMaterial);
 				plane.position.y = -1;
 				plane.receiveShadow = true;
 				scene.add(plane);
 	
-				var helper = new THREE.GridHelper(1000, 100);
-				helper.material.opacity = .25;
+				var helper = new THREE.GridHelper(1000, 100, 0x00ff00, 0x00ff00);
+				helper.material.opacity = .6;
 				helper.material.transparent = true;
 				scene.add(helper);
+				scene.background = new THREE.Color('black');
+				scene.fog = new THREE.FogExp2(new THREE.Color('black'), 0.004);
 				
 				return plane;
 			},

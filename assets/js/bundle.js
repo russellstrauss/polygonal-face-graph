@@ -5,8 +5,12 @@ module.exports = function () {
   var renderer, scene, camera, controls, floor;
   var raycaster = new THREE.Raycaster();
   var black = new THREE.Color('black');
+  var green = new THREE.Color(0x00ff00);
   var blackMaterial = new THREE.MeshBasicMaterial({
     color: black
+  });
+  var greenMaterial = new THREE.MeshBasicMaterial({
+    color: green
   });
   var arrows = [];
   var mouse = new THREE.Vector2();
@@ -96,7 +100,7 @@ module.exports = function () {
           if (previousArrowPoint) scene.remove(previousArrowPoint);
           arrows[arrows.length - 1].end = clickedPoint;
         } else {
-          previousArrowPoint = gfx.showPoint(clickedPoint, scene, black);
+          previousArrowPoint = gfx.showPoint(clickedPoint, scene, green);
           arrows.push({
             start: clickedPoint,
             end: undefined
@@ -104,7 +108,7 @@ module.exports = function () {
         }
 
         if (typeof arrows[arrows.length - 1].start !== 'undefined' && typeof arrows[arrows.length - 1].end !== 'undefined') {
-          gfx.drawLine(arrows[arrows.length - 1].start, arrows[arrows.length - 1].end, scene, black); // Draw a triangle on the end
+          gfx.drawLine(arrows[arrows.length - 1].start, arrows[arrows.length - 1].end, scene, green); // Draw a triangle on the end
 
           var arrowDirection = gfx.createVector(arrows[arrows.length - 1].start, arrows[arrows.length - 1].end);
           arrowDirection.setLength(this.settings.arrowHeadSize);
@@ -117,7 +121,7 @@ module.exports = function () {
           arrowNormal = arrowNormal.clone().applyAxisAngle(axis, Math.PI);
           var right = gfx.movePoint(arrows[arrows.length - 1].end.clone(), arrowNormal);
           var arrowHeadGeometry = gfx.createTriangle(tip, left, right);
-          var arrowHeadMesh = new THREE.Mesh(arrowHeadGeometry, blackMaterial);
+          var arrowHeadMesh = new THREE.Mesh(arrowHeadGeometry, greenMaterial);
           scene.add(arrowHeadMesh);
         }
       }
@@ -225,17 +229,17 @@ module.exports = function () {
       addFloor: function addFloor(scene) {
         var planeGeometry = new THREE.PlaneBufferGeometry(1000, 1000);
         planeGeometry.rotateX(-Math.PI / 2);
-        var planeMaterial = new THREE.ShadowMaterial({
-          opacity: 0.2
-        });
+        var planeMaterial = new THREE.ShadowMaterial();
         var plane = new THREE.Mesh(planeGeometry, planeMaterial);
         plane.position.y = -1;
         plane.receiveShadow = true;
         scene.add(plane);
-        var helper = new THREE.GridHelper(1000, 100);
-        helper.material.opacity = .25;
+        var helper = new THREE.GridHelper(1000, 100, 0x00ff00, 0x00ff00);
+        helper.material.opacity = .6;
         helper.material.transparent = true;
         scene.add(helper);
+        scene.background = new THREE.Color('black');
+        scene.fog = new THREE.FogExp2(new THREE.Color('black'), 0.004);
         return plane;
       },
       createVector: function createVector(pt1, pt2) {

@@ -3,7 +3,9 @@ module.exports = function() {
 	var renderer, scene, camera, controls, floor;
 	var raycaster = new THREE.Raycaster();
 	var black = new THREE.Color('black');
+	var green = new THREE.Color(0x00ff00);
 	var blackMaterial = new THREE.MeshBasicMaterial({ color: black });
+	var greenMaterial = new THREE.MeshBasicMaterial({ color: green });
 	var arrows = [];
 	var mouse = new THREE.Vector2();
 	var stats = new Stats();
@@ -110,12 +112,12 @@ module.exports = function() {
 					arrows[arrows.length - 1].end = clickedPoint;
 				}
 				else {
-					previousArrowPoint = gfx.showPoint(clickedPoint, scene, black);
+					previousArrowPoint = gfx.showPoint(clickedPoint, scene, green);
 					arrows.push({ start: clickedPoint, end: undefined});
 				}
 				
 				if (typeof arrows[arrows.length - 1].start !== 'undefined' && typeof arrows[arrows.length - 1].end !== 'undefined') {
-					gfx.drawLine(arrows[arrows.length - 1].start, arrows[arrows.length - 1].end, scene, black);
+					gfx.drawLine(arrows[arrows.length - 1].start, arrows[arrows.length - 1].end, scene, green);
 					
 					// Draw a triangle on the end
 					let arrowDirection = gfx.createVector(arrows[arrows.length - 1].start, arrows[arrows.length - 1].end);
@@ -128,7 +130,7 @@ module.exports = function() {
 					arrowNormal = arrowNormal.clone().applyAxisAngle(axis, Math.PI);
 					let right = gfx.movePoint(arrows[arrows.length - 1].end.clone(), arrowNormal);
 					let arrowHeadGeometry = gfx.createTriangle(tip, left, right);
-					let arrowHeadMesh = new THREE.Mesh(arrowHeadGeometry, blackMaterial);
+					let arrowHeadMesh = new THREE.Mesh(arrowHeadGeometry, greenMaterial);
 					scene.add(arrowHeadMesh);
 				}
 			}

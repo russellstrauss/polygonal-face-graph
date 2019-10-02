@@ -2,7 +2,7 @@ module.exports = function() {
 	
 	var renderer, scene, camera, controls, floor;
 	var raycaster = new THREE.Raycaster();
-	var polyloop = [];
+	var arrows = [];
 	var mouse = new THREE.Vector2();
 	var stats = new Stats();
 	var wireframeMaterial = new THREE.MeshBasicMaterial({ wireframe: true, color: 0x08CDFA });
@@ -58,9 +58,9 @@ module.exports = function() {
 		},
 		
 		sandbox: function() {
-			let line1 = this.addLine(new THREE.Vector3(-30, 0, -30), new THREE.Vector3(30, 0, 30));
-			let line2 = this.addLine(new THREE.Vector3(-30, 0, 30), new THREE.Vector3(30, 0, -30));
-			this.intersection(line1, line2);
+			// let line1 = this.addLine(new THREE.Vector3(-30, 0, -30), new THREE.Vector3(30, 0, 30));
+			// let line2 = this.addLine(new THREE.Vector3(-30, 0, 30), new THREE.Vector3(30, 0, -30));
+			// this.intersection(line1, line2);
 		},
 		
 		loadFont: function() {
@@ -89,7 +89,7 @@ module.exports = function() {
 			});
 		},
 		
-		addPoint: function(event) {
+		addArrow: function(event) {
 			
 			event.preventDefault();
 			raycaster.setFromCamera(mouse, camera);
@@ -98,12 +98,27 @@ module.exports = function() {
 			objects.push(floor);
 			var intersects = raycaster.intersectObjects(objects, true);
 			
-			if (intersects.length > 0) {
+			if (intersects.length > 0) { // if point clicked intersects with floor
 				intersects[0].point.set(intersects[0].point.x, 0, intersects[0].point.z);
-				gfx.showPoint(intersects[0].point, scene, black);
-				polyloop.push(intersects[0].point);
+				let clickedPoint = intersects[0].point;
+
+				gfx.showPoint(clickedPoint, scene, black);
 				
-				if (polyloop.length > 1) this.addLine(polyloop[polyloop.length - 2], polyloop[polyloop.length - 1]);
+				if (arrows.length === 0) {
+					arrows.push([clickedPoint, undefined]);
+				}
+				else if (arrows.length !== 0 && typeof arrows[arrows.length - 1][1] === 'undefined') {
+					arrows[arrows.length - 1][1] = clickedPoint;
+				}
+				else {
+					arrows.push([clickedPoint, undefined]);
+				}
+				console.log(arrows);
+				
+				
+				if (typeof arrows[arrows.length - 1][0] !== 'undefined' && typeof arrows[arrows.length - 1][1] !== 'undefined') {
+					gfx.drawLine(arrows[arrows.length - 1][0], arrows[arrows.length - 1][1], scene);
+				}
 				
 				return intersects[0].point;
 			}
@@ -162,7 +177,7 @@ module.exports = function() {
 			document.querySelector('canvas').addEventListener('click', function(event) {
 				
 				if (adding) {
-					self.addPoint(event);
+					self.addArrow(event);
 				}
 			});
 		},

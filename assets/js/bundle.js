@@ -14,6 +14,7 @@ module.exports = function () {
     color: green
   });
   var arrows = [];
+  var faceGraph = [];
   var mouse = new THREE.Vector2();
   var stats = new Stats();
   var wireframeMaterial = new THREE.MeshBasicMaterial({
@@ -23,6 +24,7 @@ module.exports = function () {
   var adding = false;
   var arrowHelper;
   var previousArrowPoint;
+  var bounds = {};
   return {
     settings: {
       defaultCameraLocation: {
@@ -33,10 +35,11 @@ module.exports = function () {
       messageDuration: 2000,
       arrowHeadSize: 1.5,
       colors: {
-        worldColor: black,
-        gridColor: green,
-        arrowColor: white
-      }
+        worldColor: white,
+        gridColor: black,
+        arrowColor: black
+      },
+      floorSize: 100
     },
     init: function init() {
       var self = this;
@@ -47,7 +50,7 @@ module.exports = function () {
       scene = gfx.setUpScene(scene);
       renderer = gfx.setUpRenderer(renderer);
       camera = gfx.setUpCamera(camera);
-      floor = gfx.addFloor(scene, this.settings.colors.worldColor, this.settings.colors.gridColor);
+      floor = gfx.addFloor(this.settings.floorSize, scene, this.settings.colors.worldColor, this.settings.colors.gridColor);
       gfx.enableStats(stats);
       controls = gfx.enableControls(controls, renderer, camera);
       gfx.resizeRendererOnWindowResize(renderer, camera);
@@ -65,9 +68,55 @@ module.exports = function () {
 
       animate();
     },
-    sandbox: function sandbox() {// let line1 = this.addLine(new THREE.Vector3(-30, 0, -30), new THREE.Vector3(30, 0, 30));
-      // let line2 = this.addLine(new THREE.Vector3(-30, 0, 30), new THREE.Vector3(30, 0, -30));
-      // this.intersection(line1, line2);
+    sandbox: function sandbox() {
+      bounds.left = this.createLine(new THREE.Vector3(-this.settings.floorSize / 2, 0, -this.settings.floorSize / 2), new THREE.Vector3(-this.settings.floorSize / 2, 0, this.settings.floorSize / 2));
+      bounds.right = this.createLine(new THREE.Vector3(this.settings.floorSize / 2, 0, -this.settings.floorSize / 2), new THREE.Vector3(this.settings.floorSize / 2, 0, this.settings.floorSize / 2));
+      bounds.top = this.createLine(new THREE.Vector3(-this.settings.floorSize / 2, 0, -this.settings.floorSize / 2), new THREE.Vector3(this.settings.floorSize / 2, 0, -this.settings.floorSize / 2));
+      bounds.bottom = this.createLine(new THREE.Vector3(-this.settings.floorSize / 2, 0, this.settings.floorSize / 2), new THREE.Vector3(this.settings.floorSize / 2, 0, this.settings.floorSize / 2));
+      bounds.bottomRight = new THREE.Vector3(this.settings.floorSize / 2, 0, this.settings.floorSize / 2);
+      bounds.bottomLeft = new THREE.Vector3(-this.settings.floorSize / 2, 0, this.settings.floorSize / 2);
+      bounds.topLeft = new THREE.Vector3(-this.settings.floorSize / 2, 0, -this.settings.floorSize / 2);
+      bounds.topRight = new THREE.Vector3(this.settings.floorSize / 2, 0, -this.settings.floorSize / 2);
+      arrows.push({
+        start: new THREE.Vector3(0, 0, 0),
+        end: new THREE.Vector3(10, 0, 15)
+      });
+      this.showArrow(arrows[0].start, arrows[0].end, scene);
+      var firstLine = this.createLine(arrows[0].start, arrows[0].end);
+      var pointsOnBounds = this.findPointsOnBounds(firstLine);
+      var faceResult = new THREE.Shape();
+
+      if (gfx.isRightTurn(pointsOnBounds[0], pointsOnBounds[1], bounds.bottomRight)) {// draw face
+      }
+    },
+    findPointsOnBounds: function findPointsOnBounds(line) {
+      var result = [];
+      var top = this.intersection(line, bounds.top);
+      var bottom = this.intersection(line, bounds.bottom);
+      var left = this.intersection(line, bounds.left);
+      var right = this.intersection(line, bounds.right);
+
+      if (top.x > -this.settings.floorSize / 2 && top.y > -this.settings.floorSize / 2) {
+        result.push(top);
+        gfx.showPoint(top, scene);
+      }
+
+      if (bottom.x > -this.settings.floorSize / 2 + 1 && bottom.y < this.settings.floorSize / 2 + 1) {
+        result.push(bottom);
+        gfx.showPoint(bottom, scene);
+      }
+
+      if (left.x > -this.settings.floorSize / 2 - 1 && left.y > -this.settings.floorSize / 2 - 1) {
+        result.push(left);
+        gfx.showPoint(left, scene);
+      }
+
+      if (right.x < this.settings.floorSize / 2 + 1 && right.y < this.settings.floorSize / 2 + 1) {
+        result.push(right);
+        gfx.showPoint(right, scene);
+      }
+
+      return result;
     },
     loadFont: function loadFont() {
       var self = this;
@@ -114,46 +163,52 @@ module.exports = function () {
         }
 
         if (typeof arrows[arrows.length - 1].start !== 'undefined' && typeof arrows[arrows.length - 1].end !== 'undefined') {
-          gfx.drawLine(arrows[arrows.length - 1].start, arrows[arrows.length - 1].end, scene, this.settings.colors.arrowColor); // Draw a triangle on the end
-
-          var arrowDirection = gfx.createVector(arrows[arrows.length - 1].start, arrows[arrows.length - 1].end);
-          arrowDirection.setLength(this.settings.arrowHeadSize);
-          var tip = gfx.movePoint(arrows[arrows.length - 1].end.clone(), arrowDirection);
-          var axis = new THREE.Vector3(0, 1, 0); // rotate a vector around y
-
-          var arrowNormal = arrowDirection.clone().applyAxisAngle(axis, Math.PI / 2);
-          arrowNormal.setLength(arrowNormal.length() / 2);
-          var left = gfx.movePoint(arrows[arrows.length - 1].end.clone(), arrowNormal);
-          arrowNormal = arrowNormal.clone().applyAxisAngle(axis, Math.PI);
-          var right = gfx.movePoint(arrows[arrows.length - 1].end.clone(), arrowNormal);
-          var arrowHeadGeometry = gfx.createTriangle(tip, left, right);
-          var arrowMaterial = new THREE.MeshBasicMaterial({
-            color: this.settings.colors.arrowColor
-          });
-          var arrowHeadMesh = new THREE.Mesh(arrowHeadGeometry, arrowMaterial);
-          scene.add(arrowHeadMesh);
+          this.showArrow(arrows[arrows.length - 1].start, arrows[arrows.length - 1].end, scene);
         }
       }
     },
-    addLine: function addLine(pt1, pt2) {
+    showArrow: function showArrow(start, end, scene) {
+      gfx.drawLine(start, end, scene, this.settings.colors.arrowColor); // Draw a triangle on the end
+
+      var arrowDirection = gfx.createVector(start, end);
+      arrowDirection.setLength(this.settings.arrowHeadSize);
+      var tip = gfx.movePoint(end.clone(), arrowDirection);
+      var axis = new THREE.Vector3(0, 1, 0); // rotate a vector around y
+
+      var arrowNormal = arrowDirection.clone().applyAxisAngle(axis, Math.PI / 2);
+      arrowNormal.setLength(arrowNormal.length() / 2);
+      var left = gfx.movePoint(end.clone(), arrowNormal);
+      arrowNormal = arrowNormal.clone().applyAxisAngle(axis, Math.PI);
+      var right = gfx.movePoint(end.clone(), arrowNormal);
+      var arrowHeadGeometry = gfx.createTriangle(tip, left, right);
+      var arrowMaterial = new THREE.MeshBasicMaterial({
+        color: this.settings.colors.arrowColor
+      });
+      var arrowHeadMesh = new THREE.Mesh(arrowHeadGeometry, arrowMaterial);
+      scene.add(arrowHeadMesh);
+    },
+    addLine: function addLine(pt1, pt2, color) {
       var lineDashedMaterial = new THREE.LineDashedMaterial({
-        color: 0x000000,
+        color: color,
         linewidth: 1,
         scale: 1,
         dashSize: 1,
         gapSize: 1
       });
       var lineMaterial = new THREE.LineBasicMaterial({
-        color: 0x000000
+        color: color
       });
-      var geometry = new THREE.Geometry();
-      geometry.vertices.push(pt1);
-      geometry.vertices.push(pt2);
+      var geometry = this.createLine(pt1, pt2);
       var line = new THREE.Line(geometry, lineMaterial);
       line.computeLineDistances(); // needed for dash material
 
       scene.add(line);
-      return line;
+    },
+    createLine: function createLine(pt1, pt2) {
+      var geometry = new THREE.Geometry();
+      geometry.vertices.push(pt1);
+      geometry.vertices.push(pt2);
+      return geometry;
     },
     setUpButtons: function setUpButtons() {
       var self = this;
@@ -186,15 +241,16 @@ module.exports = function () {
       });
     },
     intersection: function intersection(line1, line2) {
-      var pt1 = line1.geometry.vertices[0];
-      var pt2 = line1.geometry.vertices[1];
-      var pt3 = line2.geometry.vertices[0];
-      var pt4 = line2.geometry.vertices[1];
+      var pt1 = line1.vertices[0];
+      var pt2 = line1.vertices[1];
+      var pt3 = line2.vertices[0];
+      var pt4 = line2.vertices[1];
       var lerpLine1 = ((pt4.x - pt3.x) * (pt1.z - pt3.z) - (pt4.z - pt3.z) * (pt1.x - pt3.x)) / ((pt4.z - pt3.z) * (pt2.x - pt1.x) - (pt4.x - pt3.x) * (pt2.z - pt1.z));
       var lerpLine2 = ((pt2.x - pt1.x) * (pt1.z - pt3.z) - (pt2.z - pt1.z) * (pt1.x - pt3.x)) / ((pt4.z - pt3.z) * (pt2.x - pt1.x) - (pt4.x - pt3.x) * (pt2.z - pt1.z));
       var x = pt1.x + lerpLine1 * (pt2.x - pt1.x);
-      var z = pt1.z + lerpLine1 * (pt2.z - pt1.z);
-      gfx.showPoint(new THREE.Vector3(x, 0, z), scene);
+      var z = pt1.z + lerpLine1 * (pt2.z - pt1.z); //gfx.showPoint(new THREE.Vector3(x, 0, z), scene);
+
+      return new THREE.Vector3(x, 0, z);
     }
   };
 };
@@ -235,15 +291,15 @@ module.exports = function () {
           scene.add(helper);
         }
       },
-      addFloor: function addFloor(scene, worldColor, gridColor) {
-        var planeGeometry = new THREE.PlaneBufferGeometry(1000, 1000);
+      addFloor: function addFloor(size, scene, worldColor, gridColor) {
+        var planeGeometry = new THREE.PlaneBufferGeometry(size, size);
         planeGeometry.rotateX(-Math.PI / 2);
         var planeMaterial = new THREE.ShadowMaterial();
         var plane = new THREE.Mesh(planeGeometry, planeMaterial);
         plane.position.y = -1;
         plane.receiveShadow = true;
         scene.add(plane);
-        var helper = new THREE.GridHelper(1000, 100, gridColor, gridColor);
+        var helper = new THREE.GridHelper(size, 20, gridColor, gridColor);
         helper.material.opacity = .6;
         helper.material.transparent = true;
         scene.add(helper);
@@ -521,7 +577,7 @@ module.exports = function () {
         controls.zoomSpeed = 2;
         controls.enablePan = !utils.mobile();
         controls.minDistance = 10;
-        controls.maxDistance = 500;
+        controls.maxDistance = 800;
         controls.maxPolarAngle = Math.PI / 2;
         return controls;
       },

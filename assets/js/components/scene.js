@@ -8,12 +8,14 @@ module.exports = function() {
 	var blackMaterial = new THREE.MeshBasicMaterial({ color: black });
 	var greenMaterial = new THREE.MeshBasicMaterial({ color: green });
 	var arrows = [];
+	var faceGraph = [];
 	var mouse = new THREE.Vector2();
 	var stats = new Stats();
 	var wireframeMaterial = new THREE.MeshBasicMaterial({ wireframe: true, color: 0x08CDFA });
 	var adding = false;
 	var arrowHelper;
 	var previousArrowPoint;
+	var bounds = {};
 	
 	return {
 		
@@ -26,10 +28,11 @@ module.exports = function() {
 			messageDuration: 2000,
 			arrowHeadSize: 1.5,
 			colors: {
-				worldColor: black,
-				gridColor: green,
-				arrowColor: white
-			}
+				worldColor: white,
+				gridColor: black,
+				arrowColor: black
+			},
+			floorSize: 100
 		},
 		
 		init: function() {
@@ -45,7 +48,7 @@ module.exports = function() {
 			scene = gfx.setUpScene(scene);
 			renderer = gfx.setUpRenderer(renderer);
 			camera = gfx.setUpCamera(camera);
-			floor = gfx.addFloor(scene, this.settings.colors.worldColor, this.settings.colors.gridColor);
+			floor = gfx.addFloor(this.settings.floorSize, scene, this.settings.colors.worldColor, this.settings.colors.gridColor);
 			gfx.enableStats(stats);
 			controls = gfx.enableControls(controls, renderer, camera);
 			gfx.resizeRendererOnWindowResize(renderer, camera);
@@ -68,9 +71,50 @@ module.exports = function() {
 		},
 		
 		sandbox: function() {
-			// let line1 = this.addLine(new THREE.Vector3(-30, 0, -30), new THREE.Vector3(30, 0, 30));
-			// let line2 = this.addLine(new THREE.Vector3(-30, 0, 30), new THREE.Vector3(30, 0, -30));
-			// this.intersection(line1, line2);
+
+			bounds.left = this.createLine(new THREE.Vector3(-this.settings.floorSize/2, 0, -this.settings.floorSize/2), new THREE.Vector3(-this.settings.floorSize/2, 0, this.settings.floorSize/2));
+			bounds.right = this.createLine(new THREE.Vector3(this.settings.floorSize/2, 0, -this.settings.floorSize/2), new THREE.Vector3(this.settings.floorSize/2, 0, this.settings.floorSize/2));
+			bounds.top = this.createLine(new THREE.Vector3(-this.settings.floorSize/2, 0, -this.settings.floorSize/2), new THREE.Vector3(this.settings.floorSize/2, 0, -this.settings.floorSize/2));
+			bounds.bottom = this.createLine(new THREE.Vector3(-this.settings.floorSize/2, 0, this.settings.floorSize/2), new THREE.Vector3(this.settings.floorSize/2, 0, this.settings.floorSize/2));
+			bounds.bottomRight = new THREE.Vector3(this.settings.floorSize/2, 0, this.settings.floorSize/2);
+			bounds.bottomLeft = new THREE.Vector3(-this.settings.floorSize/2, 0, this.settings.floorSize/2);
+			bounds.topLeft = new THREE.Vector3(-this.settings.floorSize/2, 0, -this.settings.floorSize/2);
+			bounds.topRight = new THREE.Vector3(this.settings.floorSize/2, 0, -this.settings.floorSize/2);
+			
+			arrows.push({start: new THREE.Vector3(0, 0, 0), end: new THREE.Vector3(10, 0, 15)});
+			this.showArrow(arrows[0].start, arrows[0].end, scene);
+			let firstLine = this.createLine(arrows[0].start, arrows[0].end);
+			
+			let pointsOnBounds = this.findPointsOnBounds(firstLine);
+			let faceResult = new THREE.Shape();
+			if (gfx.isRightTurn(pointsOnBounds[0], pointsOnBounds[1], bounds.bottomRight)) {
+				// draw face
+			}
+		},
+		
+		findPointsOnBounds: function(line) {
+			let result = [];
+			let top = this.intersection(line, bounds.top);
+			let bottom = this.intersection(line, bounds.bottom);
+			let left = this.intersection(line, bounds.left);
+			let right = this.intersection(line, bounds.right);
+			if (top.x > -this.settings.floorSize/2 && top.y > -this.settings.floorSize/2) {
+				result.push(top);
+				gfx.showPoint(top, scene);
+			}
+			if (bottom.x > -this.settings.floorSize/2 + 1 && bottom.y < this.settings.floorSize/2 + 1) {
+				result.push(bottom);
+				gfx.showPoint(bottom, scene);
+			}
+			if (left.x > -this.settings.floorSize/2 - 1 && left.y > -this.settings.floorSize/2 - 1) {
+				result.push(left);
+				gfx.showPoint(left, scene);
+			}
+			if (right.x < this.settings.floorSize/2 + 1 && right.y < this.settings.floorSize/2 + 1) {
+				result.push(right);
+				gfx.showPoint(right, scene);
+			}
+			return result;
 		},
 		
 		loadFont: function() {
@@ -112,7 +156,6 @@ module.exports = function() {
 				intersects[0].point.set(intersects[0].point.x, 0, intersects[0].point.z);
 				let clickedPoint = intersects[0].point;
 
-				
 				if (arrows.length !== 0 && typeof arrows[arrows.length - 1].end === 'undefined') {
 					if (previousArrowPoint) scene.remove(previousArrowPoint);
 					arrows[arrows.length - 1].end = clickedPoint;
@@ -123,42 +166,51 @@ module.exports = function() {
 				}
 				
 				if (typeof arrows[arrows.length - 1].start !== 'undefined' && typeof arrows[arrows.length - 1].end !== 'undefined') {
-					gfx.drawLine(arrows[arrows.length - 1].start, arrows[arrows.length - 1].end, scene, this.settings.colors.arrowColor);
 					
-					// Draw a triangle on the end
-					let arrowDirection = gfx.createVector(arrows[arrows.length - 1].start, arrows[arrows.length - 1].end);
-					arrowDirection.setLength(this.settings.arrowHeadSize);				
-					let tip = gfx.movePoint(arrows[arrows.length - 1].end.clone(), arrowDirection);
-					let axis = new THREE.Vector3(0, 1, 0); // rotate a vector around y
-					let arrowNormal = arrowDirection.clone().applyAxisAngle(axis, Math.PI / 2);
-					arrowNormal.setLength(arrowNormal.length() / 2);
-					let left = gfx.movePoint(arrows[arrows.length - 1].end.clone(), arrowNormal);
-					arrowNormal = arrowNormal.clone().applyAxisAngle(axis, Math.PI);
-					let right = gfx.movePoint(arrows[arrows.length - 1].end.clone(), arrowNormal);
-					let arrowHeadGeometry = gfx.createTriangle(tip, left, right);
-					let arrowMaterial = new THREE.MeshBasicMaterial({ color: this.settings.colors.arrowColor });
-					let arrowHeadMesh = new THREE.Mesh(arrowHeadGeometry, arrowMaterial);
-					scene.add(arrowHeadMesh);
+					this.showArrow(arrows[arrows.length - 1].start, arrows[arrows.length - 1].end, scene);
 				}
 			}
 		},
 		
-		addLine: function(pt1, pt2) {
+		showArrow: function(start, end, scene) {
+			
+			gfx.drawLine(start, end, scene, this.settings.colors.arrowColor);
+			// Draw a triangle on the end
+			let arrowDirection = gfx.createVector(start, end);
+			arrowDirection.setLength(this.settings.arrowHeadSize);				
+			let tip = gfx.movePoint(end.clone(), arrowDirection);
+			let axis = new THREE.Vector3(0, 1, 0); // rotate a vector around y
+			let arrowNormal = arrowDirection.clone().applyAxisAngle(axis, Math.PI / 2);
+			arrowNormal.setLength(arrowNormal.length() / 2);
+			let left = gfx.movePoint(end.clone(), arrowNormal);
+			arrowNormal = arrowNormal.clone().applyAxisAngle(axis, Math.PI);
+			let right = gfx.movePoint(end.clone(), arrowNormal);
+			let arrowHeadGeometry = gfx.createTriangle(tip, left, right);
+			let arrowMaterial = new THREE.MeshBasicMaterial({ color: this.settings.colors.arrowColor });
+			let arrowHeadMesh = new THREE.Mesh(arrowHeadGeometry, arrowMaterial);
+			scene.add(arrowHeadMesh);
+		},
+		
+		addLine: function(pt1, pt2, color) {
 			var lineDashedMaterial = new THREE.LineDashedMaterial({
-				color: 0x000000,
+				color: color,
 				linewidth: 1,
 				scale: 1,
 				dashSize: 1,
 				gapSize: 1,
 			});
-			let lineMaterial = new THREE.LineBasicMaterial({ color: 0x000000 });
-			let geometry = new THREE.Geometry();
-			geometry.vertices.push(pt1);
-			geometry.vertices.push(pt2);
+			let lineMaterial = new THREE.LineBasicMaterial({ color: color });
+			let geometry = this.createLine(pt1, pt2)
 			let line = new THREE.Line(geometry, lineMaterial);
 			line.computeLineDistances(); // needed for dash material
 			scene.add(line);
-			return line;
+		},
+		
+		createLine: function(pt1, pt2) {
+			let geometry = new THREE.Geometry();
+			geometry.vertices.push(pt1);
+			geometry.vertices.push(pt2);
+			return geometry;
 		},
 		
 		setUpButtons: function() {
@@ -201,14 +253,16 @@ module.exports = function() {
 		},
 		
 		intersection: function(line1, line2) {
-			let pt1 = line1.geometry.vertices[0]; let pt2 = line1.geometry.vertices[1];
-			let pt3 = line2.geometry.vertices[0]; let pt4 = line2.geometry.vertices[1];
+			
+			let pt1 = line1.vertices[0]; let pt2 = line1.vertices[1];
+			let pt3 = line2.vertices[0]; let pt4 = line2.vertices[1];
 			let lerpLine1 = ((pt4.x - pt3.x) * (pt1.z - pt3.z) - (pt4.z - pt3.z) * (pt1.x - pt3.x)) / ((pt4.z - pt3.z) * (pt2.x - pt1.x) - (pt4.x - pt3.x) * (pt2.z - pt1.z));
 			let lerpLine2 = ((pt2.x - pt1.x) * (pt1.z - pt3.z) - (pt2.z - pt1.z) * (pt1.x - pt3.x)) / ((pt4.z - pt3.z) * (pt2.x - pt1.x) - (pt4.x - pt3.x) * (pt2.z - pt1.z));
 			
 			let x = pt1.x + lerpLine1 * (pt2.x - pt1.x);
 			let z = pt1.z + lerpLine1 * (pt2.z - pt1.z);
-			gfx.showPoint(new THREE.Vector3(x, 0, z), scene);
+			//gfx.showPoint(new THREE.Vector3(x, 0, z), scene);
+			return new THREE.Vector3(x, 0, z);
 		}
 	}
 }

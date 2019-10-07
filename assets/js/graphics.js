@@ -39,9 +39,9 @@
 				}
 			},
 
-			addFloor: function(scene, worldColor, gridColor) {
+			addFloor: function(size, scene, worldColor, gridColor) {
 
-				var planeGeometry = new THREE.PlaneBufferGeometry(1000, 1000);
+				var planeGeometry = new THREE.PlaneBufferGeometry(size, size);
 				planeGeometry.rotateX(-Math.PI / 2);
 				var planeMaterial = new THREE.ShadowMaterial();
 	
@@ -50,7 +50,7 @@
 				plane.receiveShadow = true;
 				scene.add(plane);
 	
-				var helper = new THREE.GridHelper(1000, 100, gridColor, gridColor);
+				var helper = new THREE.GridHelper(size, 20, gridColor, gridColor);
 				helper.material.opacity = .6;
 				helper.material.transparent = true;
 				scene.add(helper);
@@ -386,7 +386,7 @@
 				controls.zoomSpeed = 2;
 				controls.enablePan = !utils.mobile();
 				controls.minDistance = 10;
-				controls.maxDistance = 500;
+				controls.maxDistance = 800;
 				controls.maxPolarAngle = Math.PI / 2;
 				return controls;
 			},

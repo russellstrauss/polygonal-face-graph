@@ -5,7 +5,7 @@ module.exports = function() {
 	var black = new THREE.Color('black');
 	var white = new THREE.Color('white');
 	var green = new THREE.Color(0x00ff00);
-	var blackMaterial = new THREE.MeshBasicMaterial({ color: black });
+	var faceMaterial = new THREE.MeshBasicMaterial({ color: new THREE.Color('#00BFFE'), transparent: true, opacity: .5 });
 	var greenMaterial = new THREE.MeshBasicMaterial({ color: green });
 	var arrows = [];
 	var faceGraph = [];
@@ -22,7 +22,7 @@ module.exports = function() {
 		settings: {
 			defaultCameraLocation: {
 				x: 0,
-				y: 75,
+				y: 50,
 				z: 0
 			},
 			messageDuration: 2000,
@@ -32,7 +32,8 @@ module.exports = function() {
 				gridColor: black,
 				arrowColor: black
 			},
-			floorSize: 100
+			floorSize: 100,
+			zBuffer: .1
 		},
 		
 		init: function() {
@@ -70,8 +71,13 @@ module.exports = function() {
 			animate(); 
 		},
 		
+		// plane.intersectLine ( line : Line3, target : Vector3 ) : Vector3
+		// plane.intersectsBox ( box : Box3 ) : Boolean
+		// plane.intersectsLine ( line : Line3 ) : Boolean
+		
 		sandbox: function() {
-
+			
+			let self = this;
 			bounds.left = this.createLine(new THREE.Vector3(-this.settings.floorSize/2, 0, -this.settings.floorSize/2), new THREE.Vector3(-this.settings.floorSize/2, 0, this.settings.floorSize/2));
 			bounds.right = this.createLine(new THREE.Vector3(this.settings.floorSize/2, 0, -this.settings.floorSize/2), new THREE.Vector3(this.settings.floorSize/2, 0, this.settings.floorSize/2));
 			bounds.top = this.createLine(new THREE.Vector3(-this.settings.floorSize/2, 0, -this.settings.floorSize/2), new THREE.Vector3(this.settings.floorSize/2, 0, -this.settings.floorSize/2));
@@ -81,15 +87,44 @@ module.exports = function() {
 			bounds.topLeft = new THREE.Vector3(-this.settings.floorSize/2, 0, -this.settings.floorSize/2);
 			bounds.topRight = new THREE.Vector3(this.settings.floorSize/2, 0, -this.settings.floorSize/2);
 			
-			arrows.push({start: new THREE.Vector3(0, 0, 0), end: new THREE.Vector3(10, 0, 15)});
-			this.showArrow(arrows[0].start, arrows[0].end, scene);
-			let firstLine = this.createLine(arrows[0].start, arrows[0].end);
+			arrows.push({start: new THREE.Vector3(0, self.settings.zBuffer, 0), end: new THREE.Vector3(10, self.settings.zBuffer, 15)});
+			arrows.push({start: new THREE.Vector3(-20, self.settings.zBuffer, 10), end: new THREE.Vector3(-10, self.settings.zBuffer, 0)});
+			arrows.push({start: new THREE.Vector3(-18, self.settings.zBuffer, 17.5), end: new THREE.Vector3(2, self.settings.zBuffer, 17.5)});
 			
-			let pointsOnBounds = this.findPointsOnBounds(firstLine);
-			let faceResult = new THREE.Shape();
-			if (gfx.isRightTurn(pointsOnBounds[0], pointsOnBounds[1], bounds.bottomRight)) {
-				// draw face
-			}
+			var geometry = new THREE.Geometry();
+			
+			let faceVertex;
+			arrows.forEach(function(arrow, i) {
+				
+				self.showArrow(arrows[i].start, arrows[i].end, scene);
+				gfx.labelPoint(arrows[i].start, 'a' + i.toString(), scene, black);
+				arrows[i].line = self.createLine(arrows[i].start, arrows[i].end);
+				
+				if (typeof arrows[i - 1] !== 'undefined') {
+					
+					faceVertex = self.intersection(arrows[i].line, arrows[i - 1].line);
+					gfx.labelPoint(faceVertex, 'v' + i.toString(), scene, 0xff0000);
+					geometry.vertices.push(faceVertex);
+					gfx.showPoint(faceVertex, scene, black);
+					
+					console.log(geometry.vertices.length);
+					if (geometry.vertices.length % 3 === 0) { // not logical with current loop
+						let face = new THREE.Face3(geometry.vertices.length - 2, geometry.vertices.length - 1, geometry.vertices.length);
+						geometry.faces.push(face);
+					}
+				}
+			});
+			
+			// hard coded
+			let face = new THREE.Face3(0, 1, 2);
+			geometry.faces.push(face);
+			
+			console.log(geometry.faces);
+			faceVertex = self.intersection(arrows[0].line, arrows[arrows.length - 1].line); // last vertex
+			geometry.vertices.push(faceVertex);
+			gfx.showPoint(faceVertex, scene, black);
+			
+			scene.add( new THREE.Mesh( geometry, faceMaterial ) );
 		},
 		
 		findPointsOnBounds: function(line) {
@@ -145,6 +180,7 @@ module.exports = function() {
 		
 		addArrow: function(event) {
 			
+			let self = this;
 			event.preventDefault();
 			raycaster.setFromCamera(mouse, camera);
 
@@ -155,6 +191,7 @@ module.exports = function() {
 			if (intersects.length > 0) { // if point clicked intersects with floor
 				intersects[0].point.set(intersects[0].point.x, 0, intersects[0].point.z);
 				let clickedPoint = intersects[0].point;
+				clickedPoint = new THREE.Vector3(clickedPoint.x, self.settings.zBuffer, clickedPoint.z);a
 
 				if (arrows.length !== 0 && typeof arrows[arrows.length - 1].end === 'undefined') {
 					if (previousArrowPoint) scene.remove(previousArrowPoint);

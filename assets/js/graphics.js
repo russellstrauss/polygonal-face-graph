@@ -16,7 +16,7 @@
 					enable: true,
 					fontStyle: {
 						font: null,
-						size: 1,
+						size: 2,
 						height: 0,
 						curveSegments: 1
 					}
@@ -296,6 +296,7 @@
 					let textGeometry = new THREE.TextGeometry(label, self.appSettings.font.fontStyle);
 					let textMaterial = new THREE.MeshBasicMaterial({ color: color });
 					let mesh = new THREE.Mesh(textGeometry, textMaterial);
+					textGeometry.rotateX(-Math.PI / 2);
 					textGeometry.translate(pt.x, pt.y, pt.z);
 					scene.add(mesh);
 				}

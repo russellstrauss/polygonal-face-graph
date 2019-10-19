@@ -94,35 +94,29 @@ module.exports = function() {
 			var geometry = new THREE.Geometry();
 			
 			let faceVertex;
+			
+			arrows.forEach(function(arrow, i) { // line line object from input arrows
+				arrows[i].line = self.createLine(arrows[i].start, arrows[i].end);
+			});
+			
 			arrows.forEach(function(arrow, i) {
 				
 				self.showArrow(arrows[i].start, arrows[i].end, scene);
 				gfx.labelPoint(arrows[i].start, 'a' + i.toString(), scene, black);
-				arrows[i].line = self.createLine(arrows[i].start, arrows[i].end);
 				
-				if (typeof arrows[i - 1] !== 'undefined') {
-					
-					faceVertex = self.intersection(arrows[i].line, arrows[i - 1].line);
-					gfx.labelPoint(faceVertex, 'v' + i.toString(), scene, 0xff0000);
-					geometry.vertices.push(faceVertex);
-					gfx.showPoint(faceVertex, scene, black);
-					
-					console.log(geometry.vertices.length);
-					if (geometry.vertices.length % 3 === 0) { // not logical with current loop
-						let face = new THREE.Face3(geometry.vertices.length - 2, geometry.vertices.length - 1, geometry.vertices.length);
-						geometry.faces.push(face);
-					}
+				if (i === arrows.length - 1) faceVertex = self.intersection(arrows[0].line, arrows[i].line);
+				else {
+					faceVertex = self.intersection(arrows[i].line, arrows[i + 1].line);
 				}
+				gfx.labelPoint(faceVertex, 'v' + i.toString(), scene, 0xff0000);
+				geometry.vertices.push(faceVertex);
+
+				if (geometry.vertices.length % 3 === 0) {
+					let face = new THREE.Face3( i - 2, i - 1, i);
+					geometry.faces.push(face);
+				}
+				// Now test if this works by adding a second face by adding more vertices
 			});
-			
-			// hard coded
-			let face = new THREE.Face3(0, 1, 2);
-			geometry.faces.push(face);
-			
-			console.log(geometry.faces);
-			faceVertex = self.intersection(arrows[0].line, arrows[arrows.length - 1].line); // last vertex
-			geometry.vertices.push(faceVertex);
-			gfx.showPoint(faceVertex, scene, black);
 			
 			scene.add( new THREE.Mesh( geometry, faceMaterial ) );
 		},

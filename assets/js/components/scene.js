@@ -7,6 +7,7 @@ module.exports = function() {
 	var green = new THREE.Color(0x00ff00);
 	var faceMaterial = new THREE.MeshBasicMaterial({ color: new THREE.Color('#00BFFE'), transparent: true, opacity: .5 });
 	var greenMaterial = new THREE.MeshBasicMaterial({ color: green });
+	var polygon = new THREE.Geometry(), polygonMesh;
 	var arrows = [];
 	var faceGraph = [];
 	var mouse = new THREE.Vector2();
@@ -22,7 +23,7 @@ module.exports = function() {
 		settings: {
 			defaultCameraLocation: {
 				x: 0,
-				y: 50,
+				y: 75,
 				z: 0
 			},
 			messageDuration: 2000,
@@ -50,7 +51,7 @@ module.exports = function() {
 			renderer = gfx.setUpRenderer(renderer);
 			camera = gfx.setUpCamera(camera);
 			floor = gfx.addFloor(this.settings.floorSize, scene, this.settings.colors.worldColor, this.settings.colors.gridColor);
-			gfx.enableStats(stats);
+			//gfx.enableStats(stats);
 			controls = gfx.enableControls(controls, renderer, camera);
 			gfx.resizeRendererOnWindowResize(renderer, camera);
 			gfx.setUpLights(scene);
@@ -87,38 +88,93 @@ module.exports = function() {
 			bounds.topLeft = new THREE.Vector3(-this.settings.floorSize/2, 0, -this.settings.floorSize/2);
 			bounds.topRight = new THREE.Vector3(this.settings.floorSize/2, 0, -this.settings.floorSize/2);
 			
-			arrows.push({start: new THREE.Vector3(0, self.settings.zBuffer, 0), end: new THREE.Vector3(10, self.settings.zBuffer, 15)});
-			arrows.push({start: new THREE.Vector3(-20, self.settings.zBuffer, 10), end: new THREE.Vector3(-10, self.settings.zBuffer, 0)});
-			arrows.push({start: new THREE.Vector3(-18, self.settings.zBuffer, 17.5), end: new THREE.Vector3(2, self.settings.zBuffer, 17.5)});
+			gfx.labelPoint(new THREE.Vector3(-this.settings.floorSize/2 - 5, 0, 0), '-X', scene, black);
+			gfx.labelPoint(new THREE.Vector3(this.settings.floorSize/2 + 1.5, 0, 0), '+X', scene, black);
+			gfx.labelPoint(new THREE.Vector3(0, 0, -this.settings.floorSize/2 - 2), '-Z', scene, black);
+			gfx.labelPoint(new THREE.Vector3(0, 0, this.settings.floorSize/2 + 4.5), '+Z', scene, black);
 			
-			var geometry = new THREE.Geometry();
+			arrows.push({start: new THREE.Vector3(20, self.settings.zBuffer, 0), end: new THREE.Vector3(30, self.settings.zBuffer, 15)});
+			arrows.push({start: new THREE.Vector3(-40, self.settings.zBuffer, 10), end: new THREE.Vector3(-30, self.settings.zBuffer, 0)});
+			arrows.push({start: new THREE.Vector3(-5, self.settings.zBuffer, 17.5), end: new THREE.Vector3(-20, self.settings.zBuffer, 17.5)});
 			
-			let faceVertex;
+			//arrows.push({start: new THREE.Vector3(0, self.settings.zBuffer, 0), end: new THREE.Vector3(-2, self.settings.zBuffer, -2)});
 			
-			arrows.forEach(function(arrow, i) { // line line object from input arrows
+			//arrows.push({start: new THREE.Vector3(0, self.settings.zBuffer, 0), end: new THREE.Vector3(-5, self.settings.zBuffer, -5)});
+			
+			self.calculatePolyloop();
+		},
+		
+		calculatePolyloop: function() {
+			
+			let self = this;
+			scene.remove(polygonMesh);
+			
+			arrows.forEach(function(arrow, i) { // line object from input arrows
 				arrows[i].line = self.createLine(arrows[i].start, arrows[i].end);
 			});
 			
+			let faceVertex;
 			arrows.forEach(function(arrow, i) {
 				
 				self.showArrow(arrows[i].start, arrows[i].end, scene);
-				gfx.labelPoint(arrows[i].start, 'a' + i.toString(), scene, black);
+				gfx.labelPoint(arrows[i].start, 'arrow' + (i+1).toString(), scene, black);
 				
 				if (i === arrows.length - 1) faceVertex = self.intersection(arrows[0].line, arrows[i].line);
 				else {
+					
 					faceVertex = self.intersection(arrows[i].line, arrows[i + 1].line);
 				}
-				gfx.labelPoint(faceVertex, 'v' + i.toString(), scene, 0xff0000);
-				geometry.vertices.push(faceVertex);
-
-				if (geometry.vertices.length % 3 === 0) {
-					let face = new THREE.Face3( i - 2, i - 1, i);
-					geometry.faces.push(face);
+				if (i === 2) {
+					gfx.showPoint(faceVertex, scene, 0xff0000);
+					gfx.labelPoint(faceVertex, 'vn', scene, 0xff0000);
 				}
-				// Now test if this works by adding a second face by adding more vertices
+				else if (i === 3) {
+					gfx.showPoint(faceVertex, scene, 0xff0000);
+					gfx.labelPoint(faceVertex, 'vn+1', scene, 0xff0000);
+				}
+				else {
+					
+					gfx.showPoint(faceVertex, scene, 0xff0000);
+					gfx.labelPoint(faceVertex, 'v' + i.toString(), scene, 0xff0000);
+				}
+				polygon.vertices.push(faceVertex);
+
+				if (polygon.vertices.length % 3 === 0) {
+					let face = new THREE.Face3(i - 2, i - 1, i);
+					polygon.faces.push(face);
+				}
 			});
 			
-			scene.add( new THREE.Mesh( geometry, faceMaterial ) );
+			polygon.faces.forEach(function(face, i) {
+				self.showCorners(face);
+			});
+			
+			polygonMesh = new THREE.Mesh(polygon, faceMaterial);
+			scene.add(polygonMesh);
+		},
+		
+		showCorners: function(face) {
+
+			let self = this;
+			let geometry = new THREE.Geometry();
+			let faceVertexIndices = [face.a, face.b, face.c];
+			face.corners = [];
+			for (let i = 0; i < 3; i++) {
+				let corner = polygon.vertices[faceVertexIndices[i]];
+				face.corners.push(corner);
+				geometry.vertices.push(corner);
+			}
+			
+			let faceCenter = gfx.getCentroid2D(geometry);
+			
+			for (let i = 0; i < 3; i++) {
+				
+				let labelDirection = gfx.createVector(face.corners[i], faceCenter).setLength(8);
+				let cornerLabelPosition = gfx.movePoint(face.corners[i], labelDirection);
+				cornerLabelPosition.y += self.settings.zBuffer;
+				cornerLabelPosition.x -= 1; // text centering offset
+				gfx.labelPoint(cornerLabelPosition, 'c' + faceVertexIndices[i].toString(), scene, 0xff0000);
+			}
 		},
 		
 		findPointsOnBounds: function(line) {
@@ -185,7 +241,7 @@ module.exports = function() {
 			if (intersects.length > 0) { // if point clicked intersects with floor
 				intersects[0].point.set(intersects[0].point.x, 0, intersects[0].point.z);
 				let clickedPoint = intersects[0].point;
-				clickedPoint = new THREE.Vector3(clickedPoint.x, self.settings.zBuffer, clickedPoint.z);a
+				clickedPoint = new THREE.Vector3(clickedPoint.x, self.settings.zBuffer, clickedPoint.z);
 
 				if (arrows.length !== 0 && typeof arrows[arrows.length - 1].end === 'undefined') {
 					if (previousArrowPoint) scene.remove(previousArrowPoint);
@@ -199,6 +255,7 @@ module.exports = function() {
 				if (typeof arrows[arrows.length - 1].start !== 'undefined' && typeof arrows[arrows.length - 1].end !== 'undefined') {
 					
 					this.showArrow(arrows[arrows.length - 1].start, arrows[arrows.length - 1].end, scene);
+					self.calculatePolyloop();
 				}
 			}
 		},

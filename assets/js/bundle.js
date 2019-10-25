@@ -132,8 +132,6 @@ module.exports = function () {
       });
       polygonMesh = new THREE.Mesh(polygon, faceMaterial);
       scene.add(polygonMesh);
-      var arrow = self.nextArrow(arrows[2]);
-      gfx.showPoint(arrow.start, scene, 0x0000ff);
     },
     nextArrow: function nextArrow(currentArrow) {
       var arrowIndex = arrows.findIndex(function (element) {

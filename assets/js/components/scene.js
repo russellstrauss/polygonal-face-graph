@@ -133,9 +133,6 @@ module.exports = function() {
 			
 			polygonMesh = new THREE.Mesh(polygon, faceMaterial);
 			scene.add(polygonMesh);
-			
-			let arrow = self.nextArrow(arrows[2]);
-			gfx.showPoint(arrow.start, scene, 0x0000ff);
 		},
 		
 		nextArrow: function(currentArrow) {

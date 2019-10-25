@@ -91,22 +91,43 @@ module.exports = function () {
       gfx.labelPoint(new THREE.Vector3(-this.settings.floorSize / 2 - 5, 0, 0), '-X', scene, red);
       gfx.labelPoint(new THREE.Vector3(this.settings.floorSize / 2 + 1.5, 0, 0), '+X', scene, red);
       gfx.labelPoint(new THREE.Vector3(0, 0, -this.settings.floorSize / 2 - 2), '-Z', scene, red);
-      gfx.labelPoint(new THREE.Vector3(0, 0, this.settings.floorSize / 2 + 4.5), '+Z', scene, red);
-      arrows.push({
-        start: new THREE.Vector3(20, self.settings.zBuffer, 0),
-        end: new THREE.Vector3(30, self.settings.zBuffer, 15)
-      });
-      arrows.push({
-        start: new THREE.Vector3(-40, self.settings.zBuffer, 10),
-        end: new THREE.Vector3(-30, self.settings.zBuffer, 0)
-      });
-      arrows.push({
-        start: new THREE.Vector3(-5, self.settings.zBuffer, 17.5),
-        end: new THREE.Vector3(-20, self.settings.zBuffer, 17.5)
-      }); //arrows.push({start: new THREE.Vector3(0, self.settings.zBuffer, 0), end: new THREE.Vector3(-2, self.settings.zBuffer, -2)});
+      gfx.labelPoint(new THREE.Vector3(0, 0, this.settings.floorSize / 2 + 4.5), '+Z', scene, red); //arrows.push({start: new THREE.Vector3(20, self.settings.zBuffer, 0), end: new THREE.Vector3(30, self.settings.zBuffer, 15)});
+      // arrows.push({start: new THREE.Vector3(-40, self.settings.zBuffer, 10), end: new THREE.Vector3(-30, self.settings.zBuffer, 0)});
+      // arrows.push({start: new THREE.Vector3(-5, self.settings.zBuffer, 17.5), end: new THREE.Vector3(-20, self.settings.zBuffer, 17.5)});
+      //arrows.push({start: new THREE.Vector3(0, self.settings.zBuffer, 0), end: new THREE.Vector3(-2, self.settings.zBuffer, -2)});
       //arrows.push({start: new THREE.Vector3(0, self.settings.zBuffer, 0), end: new THREE.Vector3(-5, self.settings.zBuffer, -5)});
 
       self.calculatePolyloop();
+    },
+    getNextVertexPair: function getNextVertexPair(arrow) {
+      // Find vector with smallest positive and greatest negative projection onto infinite line to find the two closest intersecting points
+      var self = this;
+      var result = [];
+      var intersectingPoints = [];
+      arrows.forEach(function (otherArrow, i) {
+        if (arrow !== otherArrow) intersectingPoints.push(self.intersection(arrow.line, otherArrow.line));
+      });
+      var min = 100000000;
+      var max = -100000000;
+      intersectingPoints.forEach(function (point) {
+        var unitArrow = gfx.createVector(arrow.start, arrow.end).normalize();
+        var pointVec = gfx.createVector(arrow.start, point);
+        var dotResult = unitArrow.dot(pointVec, unitArrow);
+
+        if (dotResult > 0 && dotResult < min) {
+          min = dotResult;
+          result[1] = point;
+        }
+
+        if (dotResult < 0 && dotResult > max) {
+          max = dotResult;
+          result[0] = point;
+        }
+      });
+      result.forEach(function (resultPoint) {
+        gfx.showPoint(resultPoint, scene, new THREE.Color('orange'));
+      });
+      return result;
     },
     calculatePolyloop: function calculatePolyloop() {
       var self = this;
@@ -118,19 +139,24 @@ module.exports = function () {
       arrows.forEach(function (arrow, i) {
         self.showArrow(arrows[i].start, arrows[i].end, scene);
         gfx.labelPoint(arrows[i].start, 'arrow' + i.toString(), scene, red);
-        var faceVertex = self.intersection(arrows[i].line, self.nextArrow(arrows[i]).line);
-        gfx.showPoint(faceVertex, scene, 0xff0000);
-        gfx.labelPoint(faceVertex, 'v' + i.toString(), scene, 0xff0000);
-        polygon.vertices.push(faceVertex);
+        var newVertices = [];
+        newVertices = self.getNextVertexPair(arrows[i]);
+        console.clear();
+        console.log(newVertices);
+        newVertices.forEach(function (newVertex) {
+          // gfx.showPoint(newVertex, scene, 0xff0000);
+          // gfx.labelPoint(newVertex, 'v' + (polygon.vertices.length).toString(), scene, 0xff0000);
+          polygon.vertices.push(newVertex);
+        });
 
         if (polygon.vertices.length % 3 === 0) {
           var face = new THREE.Face3(i - 2, i - 1, i);
           polygon.faces.push(face);
         }
-      });
-      polygon.faces.forEach(function (face, i) {
-        self.showCorners(face);
-      }); // let customFace = new THREE.Geometry();
+      }); // polygon.faces.forEach(function(face, i) {
+      // 	self.showCorners(face);
+      // });
+      // let customFace = new THREE.Geometry();
       // customFace.vertices.push(polygon.vertices[0]);
       // customFace.vertices.push(polygon.vertices[1]);
       // customFace.vertices.push(gfx.getMidpoint(polygon.vertices[1], polygon.vertices[2]));
@@ -247,7 +273,7 @@ module.exports = function () {
           if (previousArrowPoint) scene.remove(previousArrowPoint);
           arrows[arrows.length - 1].end = clickedPoint;
         } else {
-          previousArrowPoint = gfx.showPoint(clickedPoint, scene, red);
+          previousArrowPoint = gfx.showPoint(clickedPoint, scene, 0x0000ff);
           arrows.push({
             start: clickedPoint,
             end: undefined
@@ -341,8 +367,7 @@ module.exports = function () {
       var lerpLine1 = ((pt4.x - pt3.x) * (pt1.z - pt3.z) - (pt4.z - pt3.z) * (pt1.x - pt3.x)) / ((pt4.z - pt3.z) * (pt2.x - pt1.x) - (pt4.x - pt3.x) * (pt2.z - pt1.z));
       var lerpLine2 = ((pt2.x - pt1.x) * (pt1.z - pt3.z) - (pt2.z - pt1.z) * (pt1.x - pt3.x)) / ((pt4.z - pt3.z) * (pt2.x - pt1.x) - (pt4.x - pt3.x) * (pt2.z - pt1.z));
       var x = pt1.x + lerpLine1 * (pt2.x - pt1.x);
-      var z = pt1.z + lerpLine1 * (pt2.z - pt1.z); //gfx.showPoint(new THREE.Vector3(x, 0, z), scene);
-
+      var z = pt1.z + lerpLine1 * (pt2.z - pt1.z);
       return new THREE.Vector3(x, 0, z);
     }
   };
@@ -438,23 +463,6 @@ module.exports = function () {
         midpoint.y = (pt1.y + pt2.y) / 2;
         midpoint.z = (pt1.z + pt2.z) / 2;
         return midpoint;
-      },
-      getBottomFace: function getBottomFace(tetrahedronGeometry) {
-        var self = this;
-        var bottomFace = new THREE.Geometry();
-        tetrahedronGeometry.vertices.forEach(function (vertex) {
-          if (utils.roundHundreths(vertex.y) === 0) {
-            bottomFace.vertices.push(vertex);
-          }
-        });
-        return bottomFace;
-      },
-      getCentroidOfBottomFace: function getCentroidOfBottomFace(tetrahedronGeometry) {
-        var centroidOfBottomFace = {};
-        centroidOfBottomFace.x = (tetrahedronGeometry.vertices[0].x + tetrahedronGeometry.vertices[1].x + tetrahedronGeometry.vertices[3].x) / 3;
-        centroidOfBottomFace.y = (tetrahedronGeometry.vertices[0].y + tetrahedronGeometry.vertices[1].y + tetrahedronGeometry.vertices[3].y) / 3;
-        centroidOfBottomFace.z = (tetrahedronGeometry.vertices[0].z + tetrahedronGeometry.vertices[1].z + tetrahedronGeometry.vertices[3].z) / 3;
-        return centroidOfBottomFace;
       },
       isRightTurn: function isRightTurn(startingPoint, turningPoint, endingPoint) {
         // This might only work if vectors are flat on the ground since I am using y-component to determine sign

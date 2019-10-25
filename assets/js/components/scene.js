@@ -92,14 +92,47 @@ module.exports = function() {
 			gfx.labelPoint(new THREE.Vector3(0, 0, -this.settings.floorSize/2 - 2), '-Z', scene, red);
 			gfx.labelPoint(new THREE.Vector3(0, 0, this.settings.floorSize/2 + 4.5), '+Z', scene, red);
 			
-			arrows.push({start: new THREE.Vector3(20, self.settings.zBuffer, 0), end: new THREE.Vector3(30, self.settings.zBuffer, 15)});
-			arrows.push({start: new THREE.Vector3(-40, self.settings.zBuffer, 10), end: new THREE.Vector3(-30, self.settings.zBuffer, 0)});
-			arrows.push({start: new THREE.Vector3(-5, self.settings.zBuffer, 17.5), end: new THREE.Vector3(-20, self.settings.zBuffer, 17.5)});
+			//arrows.push({start: new THREE.Vector3(20, self.settings.zBuffer, 0), end: new THREE.Vector3(30, self.settings.zBuffer, 15)});
+			// arrows.push({start: new THREE.Vector3(-40, self.settings.zBuffer, 10), end: new THREE.Vector3(-30, self.settings.zBuffer, 0)});
+			// arrows.push({start: new THREE.Vector3(-5, self.settings.zBuffer, 17.5), end: new THREE.Vector3(-20, self.settings.zBuffer, 17.5)});
 			
 			//arrows.push({start: new THREE.Vector3(0, self.settings.zBuffer, 0), end: new THREE.Vector3(-2, self.settings.zBuffer, -2)});
 			//arrows.push({start: new THREE.Vector3(0, self.settings.zBuffer, 0), end: new THREE.Vector3(-5, self.settings.zBuffer, -5)});
 			
 			self.calculatePolyloop();
+		},
+		
+		getNextVertexPair: function(arrow) { // Find vector with smallest positive and greatest negative projection onto infinite line to find the two closest intersecting points
+			
+			let self = this;
+			let result = [];
+			let intersectingPoints = [];
+			arrows.forEach(function(otherArrow, i) {
+				if (arrow !== otherArrow) intersectingPoints.push(self.intersection(arrow.line, otherArrow.line));
+			});
+			
+			let min = 100000000;
+			let max = -100000000;
+			intersectingPoints.forEach(function(point) {
+				let unitArrow = gfx.createVector(arrow.start, arrow.end).normalize();
+				let pointVec = gfx.createVector(arrow.start, point);
+				let dotResult = unitArrow.dot(pointVec, unitArrow);
+				
+				if (dotResult > 0 && dotResult < min) {
+					min = dotResult; 
+					result[1] = point;
+				}
+				if (dotResult < 0 && dotResult > max) {
+					max = dotResult;
+					result[0] = point;
+				}
+			});
+			
+			result.forEach(function(resultPoint) {
+				gfx.showPoint(resultPoint, scene, new THREE.Color('orange'));
+			});
+			
+			return result;
 		},
 		
 		calculatePolyloop: function() {
@@ -115,11 +148,19 @@ module.exports = function() {
 				
 				self.showArrow(arrows[i].start, arrows[i].end, scene);
 				gfx.labelPoint(arrows[i].start, 'arrow' + (i).toString(), scene, red);
+				
+				let newVertices = [];
 
-				let faceVertex = self.intersection(arrows[i].line, self.nextArrow(arrows[i]).line);
-				gfx.showPoint(faceVertex, scene, 0xff0000);
-				gfx.labelPoint(faceVertex, 'v' + i.toString(), scene, 0xff0000);
-				polygon.vertices.push(faceVertex);
+				newVertices = self.getNextVertexPair(arrows[i]);
+				console.clear();
+				console.log(newVertices);
+				
+				newVertices.forEach(function(newVertex) {
+					
+					// gfx.showPoint(newVertex, scene, 0xff0000);
+					// gfx.labelPoint(newVertex, 'v' + (polygon.vertices.length).toString(), scene, 0xff0000);
+					polygon.vertices.push(newVertex);
+				});
 
 				if (polygon.vertices.length % 3 === 0) {
 					let face = new THREE.Face3(i - 2, i - 1, i);
@@ -127,9 +168,9 @@ module.exports = function() {
 				}
 			});
 			
-			polygon.faces.forEach(function(face, i) {
-				self.showCorners(face);
-			});
+			// polygon.faces.forEach(function(face, i) {
+			// 	self.showCorners(face);
+			// });
 			
 			// let customFace = new THREE.Geometry();
 			// customFace.vertices.push(polygon.vertices[0]);
@@ -257,7 +298,7 @@ module.exports = function() {
 					arrows[arrows.length - 1].end = clickedPoint;
 				}
 				else {
-					previousArrowPoint = gfx.showPoint(clickedPoint, scene, red);
+					previousArrowPoint = gfx.showPoint(clickedPoint, scene, 0x0000ff);
 					arrows.push({ start: clickedPoint, end: undefined});
 				}
 				
@@ -350,7 +391,7 @@ module.exports = function() {
 		},
 		
 		intersection: function(line1, line2) {
-			
+
 			let pt1 = line1.vertices[0]; let pt2 = line1.vertices[1];
 			let pt3 = line2.vertices[0]; let pt4 = line2.vertices[1];
 			let lerpLine1 = ((pt4.x - pt3.x) * (pt1.z - pt3.z) - (pt4.z - pt3.z) * (pt1.x - pt3.x)) / ((pt4.z - pt3.z) * (pt2.x - pt1.x) - (pt4.x - pt3.x) * (pt2.z - pt1.z));
@@ -358,7 +399,6 @@ module.exports = function() {
 			
 			let x = pt1.x + lerpLine1 * (pt2.x - pt1.x);
 			let z = pt1.z + lerpLine1 * (pt2.z - pt1.z);
-			//gfx.showPoint(new THREE.Vector3(x, 0, z), scene);
 			return new THREE.Vector3(x, 0, z);
 		}
 	}

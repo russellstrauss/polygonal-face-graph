@@ -115,32 +115,6 @@
 				midpoint.z = (pt1.z + pt2.z) / 2;
 				return midpoint;
 			},
-
-			getBottomFace: function(tetrahedronGeometry) {
-			
-				let self = this;
-				let bottomFace = new THREE.Geometry();
-				
-				tetrahedronGeometry.vertices.forEach(function(vertex) {
-					
-					if (utils.roundHundreths(vertex.y) === 0) {
-						
-						bottomFace.vertices.push(vertex);
-					}
-				});
-				
-				return bottomFace;
-			},
-
-			getCentroidOfBottomFace: function(tetrahedronGeometry) {
-			
-				let centroidOfBottomFace = {};
-				centroidOfBottomFace.x = (tetrahedronGeometry.vertices[0].x + tetrahedronGeometry.vertices[1].x + tetrahedronGeometry.vertices[3].x) / 3;
-				centroidOfBottomFace.y = (tetrahedronGeometry.vertices[0].y + tetrahedronGeometry.vertices[1].y + tetrahedronGeometry.vertices[3].y) / 3;
-				centroidOfBottomFace.z = (tetrahedronGeometry.vertices[0].z + tetrahedronGeometry.vertices[1].z + tetrahedronGeometry.vertices[3].z) / 3;
-				
-				return centroidOfBottomFace;
-			},
 			
 			isRightTurn: function(startingPoint, turningPoint, endingPoint) { // This might only work if vectors are flat on the ground since I am using y-component to determine sign
 

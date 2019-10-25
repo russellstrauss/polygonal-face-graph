@@ -1,5 +1,6 @@
-$textColor: black;
-$textBackground: rgba(255, 255, 255, .7);
+$textColor: red;
+$legendTextColor: black;
+$textBackground: rgba(255, 0, 0, .4);
 
 #message {
 	font-size: 22px;
@@ -22,6 +23,7 @@ $textBackground: rgba(255, 255, 255, .7);
 	}
 	
 	.backdrop {
+		color: $legendTextColor;
 		border: 1px solid $textColor;
 		//background-color: rgba(255, 255, 255, .4);
 		background-color: $textBackground;

@@ -75,9 +75,6 @@ module.exports = function () {
 
       animate();
     },
-    // plane.intersectLine ( line : Line3, target : Vector3 ) : Vector3
-    // plane.intersectsBox ( box : Box3 ) : Boolean
-    // plane.intersectsLine ( line : Line3 ) : Boolean
     sandbox: function sandbox() {
       var self = this;
       bounds.left = this.createLine(new THREE.Vector3(-this.settings.floorSize / 2, 0, -this.settings.floorSize / 2), new THREE.Vector3(-this.settings.floorSize / 2, 0, this.settings.floorSize / 2));
@@ -104,9 +101,11 @@ module.exports = function () {
       var self = this;
       var result = [];
       var intersectingPoints = [];
-      arrows.forEach(function (otherArrow, i) {
-        if (arrow !== otherArrow) intersectingPoints.push(self.intersection(arrow.line, otherArrow.line));
-      });
+      if (arrow !== self.nextArrow(arrow)) intersectingPoints.push(self.intersection(arrow.line, self.nextArrow(arrow).line)); // arrows.forEach(function(otherArrow, i) {
+      // 	console.log(arrow === otherArrow);
+      // 	if (arrow !== otherArrow) intersectingPoints.push(self.intersection(arrow.line, otherArrow.line));
+      // });
+
       var min = 100000000;
       var max = -100000000;
       intersectingPoints.forEach(function (point) {
@@ -116,18 +115,18 @@ module.exports = function () {
 
         if (dotResult > 0 && dotResult < min) {
           min = dotResult;
-          result[1] = point;
+          result.push(point);
         }
 
         if (dotResult < 0 && dotResult > max) {
           max = dotResult;
-          result[0] = point;
+          result.push(point);
         }
       });
       result.forEach(function (resultPoint) {
         gfx.showPoint(resultPoint, scene, new THREE.Color('orange'));
       });
-      return result;
+      if (result.length) return result;
     },
     calculatePolyloop: function calculatePolyloop() {
       var self = this;
@@ -141,16 +140,15 @@ module.exports = function () {
         gfx.labelPoint(arrows[i].start, 'arrow' + i.toString(), scene, red);
         var newVertices = [];
         newVertices = self.getNextVertexPair(arrows[i]);
-        console.clear();
-        console.log(newVertices);
-        newVertices.forEach(function (newVertex) {
+        if (newVertices) newVertices.forEach(function (newVertex) {
           // gfx.showPoint(newVertex, scene, 0xff0000);
-          // gfx.labelPoint(newVertex, 'v' + (polygon.vertices.length).toString(), scene, 0xff0000);
+          gfx.labelPoint(newVertex, 'v' + polygon.vertices.length.toString(), scene, 0xff0000);
           polygon.vertices.push(newVertex);
         });
 
-        if (polygon.vertices.length % 3 === 0) {
-          var face = new THREE.Face3(i - 2, i - 1, i);
+        if (polygon.vertices.length > 1 & polygon.vertices.length % 3 === 0) {
+          console.log('add face');
+          var face = new THREE.Face3(0, 1, 2);
           polygon.faces.push(face);
         }
       }); // polygon.faces.forEach(function(face, i) {
@@ -166,6 +164,7 @@ module.exports = function () {
       // let customMesh = new THREE.Mesh(customFace, greenMaterial);
       // customFace.translate(0, .05, 0);
       // scene.add(customMesh);
+      //console.log(polygon.faces)
 
       polygonMesh = new THREE.Mesh(polygon, faceMaterial);
       scene.add(polygonMesh);

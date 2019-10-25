@@ -51,7 +51,7 @@
 				scene.add(plane);
 	
 				var helper = new THREE.GridHelper(size, 20, gridColor, gridColor);
-				helper.material.opacity = .3;
+				helper.material.opacity = .75;
 				helper.material.transparent = true;
 				scene.add(helper);
 				scene.background = worldColor;

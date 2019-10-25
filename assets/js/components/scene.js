@@ -2,10 +2,9 @@ module.exports = function() {
 	
 	var renderer, scene, camera, controls, floor;
 	var raycaster = new THREE.Raycaster();
-	var black = new THREE.Color('black');
-	var white = new THREE.Color('white');
-	var green = new THREE.Color(0x00ff00);
-	var faceMaterial = new THREE.MeshBasicMaterial({ color: new THREE.Color('#00BFFE'), transparent: true, opacity: .5 });
+	var black = new THREE.Color('black'), white = new THREE.Color('white'), green = new THREE.Color(0x00ff00), red = new THREE.Color('#ED0000');
+	
+	var faceMaterial = new THREE.MeshBasicMaterial({ color: red, transparent: true, opacity: .2 });
 	var greenMaterial = new THREE.MeshBasicMaterial({ color: green });
 	var polygon = new THREE.Geometry(), polygonMesh;
 	var arrows = [];
@@ -29,9 +28,9 @@ module.exports = function() {
 			messageDuration: 2000,
 			arrowHeadSize: 1.5,
 			colors: {
-				worldColor: white,
-				gridColor: black,
-				arrowColor: black
+				worldColor: black,
+				gridColor: new THREE.Color('#ED0000'),
+				arrowColor: red
 			},
 			floorSize: 100,
 			zBuffer: .1
@@ -88,10 +87,10 @@ module.exports = function() {
 			bounds.topLeft = new THREE.Vector3(-this.settings.floorSize/2, 0, -this.settings.floorSize/2);
 			bounds.topRight = new THREE.Vector3(this.settings.floorSize/2, 0, -this.settings.floorSize/2);
 			
-			gfx.labelPoint(new THREE.Vector3(-this.settings.floorSize/2 - 5, 0, 0), '-X', scene, black);
-			gfx.labelPoint(new THREE.Vector3(this.settings.floorSize/2 + 1.5, 0, 0), '+X', scene, black);
-			gfx.labelPoint(new THREE.Vector3(0, 0, -this.settings.floorSize/2 - 2), '-Z', scene, black);
-			gfx.labelPoint(new THREE.Vector3(0, 0, this.settings.floorSize/2 + 4.5), '+Z', scene, black);
+			gfx.labelPoint(new THREE.Vector3(-this.settings.floorSize/2 - 5, 0, 0), '-X', scene, red);
+			gfx.labelPoint(new THREE.Vector3(this.settings.floorSize/2 + 1.5, 0, 0), '+X', scene, red);
+			gfx.labelPoint(new THREE.Vector3(0, 0, -this.settings.floorSize/2 - 2), '-Z', scene, red);
+			gfx.labelPoint(new THREE.Vector3(0, 0, this.settings.floorSize/2 + 4.5), '+Z', scene, red);
 			
 			arrows.push({start: new THREE.Vector3(20, self.settings.zBuffer, 0), end: new THREE.Vector3(30, self.settings.zBuffer, 15)});
 			arrows.push({start: new THREE.Vector3(-40, self.settings.zBuffer, 10), end: new THREE.Vector3(-30, self.settings.zBuffer, 0)});
@@ -117,7 +116,7 @@ module.exports = function() {
 			arrows.forEach(function(arrow, i) {
 				
 				self.showArrow(arrows[i].start, arrows[i].end, scene);
-				gfx.labelPoint(arrows[i].start, 'arrow' + (i+1).toString(), scene, black);
+				gfx.labelPoint(arrows[i].start, 'arrow' + (i+1).toString(), scene, red);
 				
 				if (i === arrows.length - 1) faceVertex = self.intersection(arrows[0].line, arrows[i].line);
 				else {
@@ -248,7 +247,7 @@ module.exports = function() {
 					arrows[arrows.length - 1].end = clickedPoint;
 				}
 				else {
-					previousArrowPoint = gfx.showPoint(clickedPoint, scene, green);
+					previousArrowPoint = gfx.showPoint(clickedPoint, scene, red);
 					arrows.push({ start: clickedPoint, end: undefined});
 				}
 				

@@ -97,7 +97,6 @@ module.exports = function() {
 			arrows.push({start: new THREE.Vector3(-5, self.settings.zBuffer, 17.5), end: new THREE.Vector3(-20, self.settings.zBuffer, 17.5)});
 			
 			//arrows.push({start: new THREE.Vector3(0, self.settings.zBuffer, 0), end: new THREE.Vector3(-2, self.settings.zBuffer, -2)});
-			
 			//arrows.push({start: new THREE.Vector3(0, self.settings.zBuffer, 0), end: new THREE.Vector3(-5, self.settings.zBuffer, -5)});
 			
 			self.calculatePolyloop();
@@ -112,30 +111,14 @@ module.exports = function() {
 				arrows[i].line = self.createLine(arrows[i].start, arrows[i].end);
 			});
 			
-			let faceVertex;
 			arrows.forEach(function(arrow, i) {
 				
 				self.showArrow(arrows[i].start, arrows[i].end, scene);
-				gfx.labelPoint(arrows[i].start, 'arrow' + (i+1).toString(), scene, red);
-				
-				if (i === arrows.length - 1) faceVertex = self.intersection(arrows[0].line, arrows[i].line);
-				else {
-					
-					faceVertex = self.intersection(arrows[i].line, arrows[i + 1].line);
-				}
-				if (i === 2) {
-					gfx.showPoint(faceVertex, scene, 0xff0000);
-					gfx.labelPoint(faceVertex, 'vn', scene, 0xff0000);
-				}
-				else if (i === 3) {
-					gfx.showPoint(faceVertex, scene, 0xff0000);
-					gfx.labelPoint(faceVertex, 'vn+1', scene, 0xff0000);
-				}
-				else {
-					
-					gfx.showPoint(faceVertex, scene, 0xff0000);
-					gfx.labelPoint(faceVertex, 'v' + i.toString(), scene, 0xff0000);
-				}
+				gfx.labelPoint(arrows[i].start, 'arrow' + (i).toString(), scene, red);
+
+				let faceVertex = self.intersection(arrows[i].line, self.nextArrow(arrows[i]).line);
+				gfx.showPoint(faceVertex, scene, 0xff0000);
+				gfx.labelPoint(faceVertex, 'v' + i.toString(), scene, 0xff0000);
 				polygon.vertices.push(faceVertex);
 
 				if (polygon.vertices.length % 3 === 0) {
@@ -150,6 +133,25 @@ module.exports = function() {
 			
 			polygonMesh = new THREE.Mesh(polygon, faceMaterial);
 			scene.add(polygonMesh);
+			
+			let arrow = self.nextArrow(arrows[2]);
+			gfx.showPoint(arrow.start, scene, 0x0000ff);
+		},
+		
+		nextArrow: function(currentArrow) {
+			
+			let arrowIndex = arrows.findIndex(function(element) {
+				return element === currentArrow;
+			});
+			return arrows[(arrowIndex + 1) % arrows.length];
+		},
+		
+		nextVertex: function(currentVertex) {
+			
+			let vertexIndex = polygon.vertices.findIndex(function(element) {
+				return element === currentVertex;
+			});
+			return polygon.vertices[(vertexIndex + 1) % polygon.vertices.length];
 		},
 		
 		showCorners: function(face) {

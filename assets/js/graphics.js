@@ -106,12 +106,13 @@
 			},
 
 			getMidpoint: function(pt1, pt2) {
+				
+				console.log(pt1, pt2);
 			
 				let midpoint = new THREE.Vector3();
 				midpoint.x = (pt1.x + pt2.x) / 2;
 				midpoint.y = (pt1.y + pt2.y) / 2;
 				midpoint.z = (pt1.z + pt2.z) / 2;
-				
 				return midpoint;
 			},
 

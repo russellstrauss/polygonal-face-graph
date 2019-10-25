@@ -11,7 +11,8 @@ module.exports = function () {
   var faceMaterial = new THREE.MeshBasicMaterial({
     color: red,
     transparent: true,
-    opacity: .2
+    opacity: .2,
+    side: THREE.DoubleSide
   });
   var greenMaterial = new THREE.MeshBasicMaterial({
     color: green
@@ -129,7 +130,17 @@ module.exports = function () {
       });
       polygon.faces.forEach(function (face, i) {
         self.showCorners(face);
-      });
+      }); // let customFace = new THREE.Geometry();
+      // customFace.vertices.push(polygon.vertices[0]);
+      // customFace.vertices.push(polygon.vertices[1]);
+      // customFace.vertices.push(gfx.getMidpoint(polygon.vertices[1], polygon.vertices[2]));
+      // customFace.vertices.push(gfx.getMidpoint(polygon.vertices[2], gfx.getCentroid2D(polygon)))
+      // customFace.faces.push(new THREE.Face3(0, 1, 2));
+      // customFace.faces.push(new THREE.Face3(0, 2, 3));
+      // let customMesh = new THREE.Mesh(customFace, greenMaterial);
+      // customFace.translate(0, .05, 0);
+      // scene.add(customMesh);
+
       polygonMesh = new THREE.Mesh(polygon, faceMaterial);
       scene.add(polygonMesh);
     },
@@ -421,6 +432,7 @@ module.exports = function () {
         return magnitude;
       },
       getMidpoint: function getMidpoint(pt1, pt2) {
+        console.log(pt1, pt2);
         var midpoint = new THREE.Vector3();
         midpoint.x = (pt1.x + pt2.x) / 2;
         midpoint.y = (pt1.y + pt2.y) / 2;

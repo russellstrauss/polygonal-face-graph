@@ -55,7 +55,7 @@
 				helper.material.transparent = true;
 				scene.add(helper);
 				scene.background = worldColor;
-				scene.fog = new THREE.FogExp2(new THREE.Color('black'), 0.004);
+				//scene.fog = new THREE.FogExp2(new THREE.Color('black'), 0.002);
 				
 				return plane;
 			},

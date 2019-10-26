@@ -31,6 +31,7 @@ module.exports = function () {
   var arrowHelper;
   var previousArrowPoint;
   var bounds = {};
+  var infiniteFaceMesh;
   return {
     settings: {
       defaultCameraLocation: {
@@ -46,7 +47,8 @@ module.exports = function () {
         arrowColor: red
       },
       floorSize: 100,
-      zBuffer: .1
+      zBuffer: .1,
+      infiniteScale: 50000
     },
     init: function init() {
       var self = this;
@@ -86,19 +88,8 @@ module.exports = function () {
       gfx.labelPoint(new THREE.Vector3(-this.settings.floorSize / 2 - 5, 0, 0), '-X', scene, red);
       gfx.labelPoint(new THREE.Vector3(this.settings.floorSize / 2 + 1.5, 0, 0), '+X', scene, red);
       gfx.labelPoint(new THREE.Vector3(0, 0, -this.settings.floorSize / 2 - 2), '-Z', scene, red);
-      gfx.labelPoint(new THREE.Vector3(0, 0, this.settings.floorSize / 2 + 4.5), '+Z', scene, red); //arrows.push({start: new THREE.Vector3(20, self.settings.zBuffer, 0), end: new THREE.Vector3(30, self.settings.zBuffer, 15)});
-      // arrows.push({start: new THREE.Vector3(-40, self.settings.zBuffer, 10), end: new THREE.Vector3(-30, self.settings.zBuffer, 0)});
-      // arrows.push({start: new THREE.Vector3(-5, self.settings.zBuffer, 17.5), end: new THREE.Vector3(-20, self.settings.zBuffer, 17.5)});
-      //arrows.push({start: new THREE.Vector3(0, self.settings.zBuffer, 0), end: new THREE.Vector3(-2, self.settings.zBuffer, -2)});
-      //arrows.push({start: new THREE.Vector3(0, self.settings.zBuffer, 0), end: new THREE.Vector3(-5, self.settings.zBuffer, -5)});
-
+      gfx.labelPoint(new THREE.Vector3(0, 0, this.settings.floorSize / 2 + 4.5), '+Z', scene, red);
       self.calculatePolyloop();
-      var geometry = new THREE.Geometry();
-      gfx.showPoint(new THREE.Vector3(-40, 0, -20), scene, 0xff0000);
-      geometry.vertices.push(new THREE.Vector3(-40, 0, -40), new THREE.Vector3(-20, 0, -40), new THREE.Vector3(-40, 0, -20), new THREE.Vector3(-25, 0, -25));
-      gfx.showPoints(geometry, scene, 0xff0000);
-      var testFace = self.drawConvexFace(geometry, faceMaterial);
-      scene.add(testFace);
     },
     drawConvexFace: function drawConvexFace(geometry, material) {
       var self = this;
@@ -115,9 +106,10 @@ module.exports = function () {
       var self = this;
       var midpoint = new THREE.Vector3(0, 0, 0);
       geometry.vertices.forEach(function (vertex) {
-        midpoint.x += vertex.x;
+        midpoint.x += vertex.x - .001; // very slight offset for the case where polygon is a quadrilateral so that not all angles are equal
+
         midpoint.y += vertex.y;
-        midpoint.z += vertex.z;
+        midpoint.z += vertex.z - .001;
       });
       midpoint.x /= geometry.vertices.length;
       midpoint.y /= geometry.vertices.length;
@@ -150,6 +142,31 @@ module.exports = function () {
 
       polygonMesh = new THREE.Mesh(polygon, faceMaterial);
       scene.add(polygonMesh);
+    },
+    getInfiniteFace1: function getInfiniteFace1() {
+      var self = this;
+      var arrow = arrows[0];
+      var infiniteFaceGeometry = new THREE.Geometry();
+      var yAxis = new THREE.Vector3(0, 1, 0);
+      var direction = gfx.createVector(arrow.start, arrow.end).setLength(self.settings.infiniteScale);
+      var frontLeft = gfx.movePoint(arrow.end.clone(), direction);
+      var frontRight = gfx.movePoint(frontLeft, direction.clone().applyAxisAngle(yAxis, -Math.PI / 2));
+      var backLeft = gfx.movePoint(arrow.start.clone(), direction.clone().applyAxisAngle(yAxis, Math.PI));
+      var backRight = gfx.movePoint(backLeft, direction.clone().applyAxisAngle(yAxis, -Math.PI / 2));
+      infiniteFaceGeometry.vertices.push(frontLeft, frontRight, backLeft, backRight);
+      return infiniteFaceGeometry;
+    },
+    getInfiniteFace2: function getInfiniteFace2() {
+      var self = this;
+      var infiniteFaceGeometry = new THREE.Geometry();
+      var corner = polygon.vertices[0];
+      var yAxis = new THREE.Vector3(0, 1, 0);
+      var direction1 = gfx.createVector(arrows[0].end, arrows[0].start).setLength(self.settings.infiniteScale);
+      var direction2 = gfx.createVector(arrows[1].end, arrows[1].start).setLength(self.settings.infiniteScale);
+      var backCorner1 = gfx.movePoint(corner.clone(), direction1);
+      var backCorner2 = gfx.movePoint(corner.clone(), direction2);
+      infiniteFaceGeometry.vertices.push(corner, backCorner1, backCorner2);
+      return infiniteFaceGeometry;
     },
     nextArrow: function nextArrow(currentArrow) {
       var arrowIndex = arrows.findIndex(function (element) {
@@ -256,7 +273,7 @@ module.exports = function () {
           if (previousArrowPoint) scene.remove(previousArrowPoint);
           arrows[arrows.length - 1].end = clickedPoint;
         } else {
-          previousArrowPoint = gfx.showPoint(clickedPoint, scene, 0x0000ff);
+          previousArrowPoint = gfx.showPoint(clickedPoint, scene, red);
           arrows.push({
             start: clickedPoint,
             end: undefined
@@ -267,6 +284,20 @@ module.exports = function () {
           this.showArrow(arrows[arrows.length - 1].start, arrows[arrows.length - 1].end, scene);
           self.calculatePolyloop();
           self.updateStructure();
+          scene.remove(infiniteFaceMesh);
+
+          if (arrows.length === 1) {
+            var infiniteFace = self.getInfiniteFace1();
+            infiniteFaceMesh = self.drawConvexFace(infiniteFace, faceMaterial);
+            scene.add(infiniteFaceMesh);
+          } else if (arrows.length === 2) {
+            scene.remove(infiniteFaceMesh);
+
+            var _infiniteFace = self.getInfiniteFace2();
+
+            infiniteFaceMesh = self.drawConvexFace(_infiniteFace, faceMaterial);
+            scene.add(infiniteFaceMesh);
+          }
         }
       }
     },
@@ -307,7 +338,7 @@ module.exports = function () {
       var newVertices = [];
       newVertices = self.getNextVertexPair(arrows[arrows.length - 1]);
       if (newVertices) newVertices.forEach(function (newVertex) {
-        gfx.showPoint(newVertex, scene, new THREE.Color('purple'));
+        gfx.showPoint(newVertex, scene, 0xff0000);
         gfx.labelPoint(newVertex, 'v' + polygon.vertices.length.toString(), scene, 0xff0000);
         polygon.vertices.push(newVertex);
       });
@@ -318,7 +349,7 @@ module.exports = function () {
         polygon.faces.push(face);
         var customFace = new THREE.Geometry();
         customFace.vertices.push(polygon.vertices[0], polygon.vertices[1], polygon.vertices[2]);
-        gfx.showPoints(customFace, scene, 0x0000ff);
+        gfx.showPoints(customFace, scene, red);
         var customFaceMesh = self.drawConvexFace(customFace, faceMaterial);
         console.log(polygon.vertices); // polygon.customFace.geometry.push(customFace);
         // polygon.customFace.mesh.push(customFaceMesh);
@@ -461,8 +492,8 @@ module.exports = function () {
         helper.material.opacity = .75;
         helper.material.transparent = true;
         scene.add(helper);
-        scene.background = worldColor;
-        scene.fog = new THREE.FogExp2(new THREE.Color('black'), 0.004);
+        scene.background = worldColor; //scene.fog = new THREE.FogExp2(new THREE.Color('black'), 0.002);
+
         return plane;
       },
       createVector: function createVector(pt1, pt2) {

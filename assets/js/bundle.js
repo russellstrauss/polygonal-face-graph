@@ -103,20 +103,14 @@ module.exports = function () {
     },
     drawConvexFace: function drawConvexFace(geometry, material) {
       var self = this;
-      var sortedGeometry = self.sortVerticesClockwise(geometry); // sortedGeometry.vertices.forEach(function(vertex) {
-      // 	console.log(vertex.angle);
-      // });
-
-      gfx.labelPoint(geometry.vertices[0], 0 .toString(), scene);
+      var sortedGeometry = self.sortVerticesClockwise(geometry);
 
       for (var i = 1; i < sortedGeometry.vertices.length - 1; i += 1) {
-        gfx.labelPoint(geometry.vertices[i], i.toString(), scene);
         sortedGeometry.faces.push(new THREE.Face3(0, i, i + 1));
       }
 
       var mesh = new THREE.Mesh(sortedGeometry, material);
       scene.add(mesh);
-      gfx.labelPoint(geometry.vertices[geometry.vertices.length - 1], (geometry.vertices.length - 1).toString(), scene);
     },
     sortVerticesClockwise: function sortVerticesClockwise(geometry) {
       var self = this;
@@ -139,42 +133,7 @@ module.exports = function () {
       sorted.vertices.sort(function (a, b) {
         return a.angle - b.angle;
       });
-      sorted.vertices.forEach(function (vertex) {
-        console.log(vertex.angle);
-      });
       return sorted;
-    },
-    getNextVertexPair: function getNextVertexPair(arrow) {
-      // Find vector with smallest positive and greatest negative projection onto infinite line to find the two closest intersecting points
-      var self = this;
-      var result = [];
-      var intersectingPoints = [];
-      if (arrow !== self.nextArrow(arrow)) intersectingPoints.push(self.intersection(arrow.line, self.nextArrow(arrow).line)); // arrows.forEach(function(otherArrow, i) {
-      // 	console.log(arrow === otherArrow);
-      // 	if (arrow !== otherArrow) intersectingPoints.push(self.intersection(arrow.line, otherArrow.line));
-      // });
-
-      var min = 100000000;
-      var max = -100000000;
-      intersectingPoints.forEach(function (point) {
-        var unitArrow = gfx.createVector(arrow.start, arrow.end).normalize();
-        var pointVec = gfx.createVector(arrow.start, point);
-        var dotResult = unitArrow.dot(pointVec, unitArrow);
-
-        if (dotResult > 0 && dotResult < min) {
-          min = dotResult;
-          result.push(point);
-        }
-
-        if (dotResult < 0 && dotResult > max) {
-          max = dotResult;
-          result.push(point);
-        }
-      });
-      result.forEach(function (resultPoint) {
-        gfx.showPoint(resultPoint, scene, new THREE.Color('orange'));
-      });
-      if (result.length) return result;
     },
     calculatePolyloop: function calculatePolyloop() {
       var self = this;
@@ -184,35 +143,11 @@ module.exports = function () {
         arrows[i].line = self.createLine(arrows[i].start, arrows[i].end);
       });
       arrows.forEach(function (arrow, i) {
-        self.showArrow(arrows[i].start, arrows[i].end, scene);
+        self.showArrow(arrows[i].start, arrows[i].end, scene, 0x111111 * i);
         gfx.labelPoint(arrows[i].start, 'arrow' + i.toString(), scene, red);
-        var newVertices = [];
-        newVertices = self.getNextVertexPair(arrows[i]);
-        if (newVertices) newVertices.forEach(function (newVertex) {
-          // gfx.showPoint(newVertex, scene, 0xff0000);
-          gfx.labelPoint(newVertex, 'v' + polygon.vertices.length.toString(), scene, 0xff0000);
-          polygon.vertices.push(newVertex);
-        });
-
-        if (polygon.vertices.length > 1 & polygon.vertices.length % 3 === 0) {
-          console.log('add face');
-          var face = new THREE.Face3(0, 1, 2);
-          polygon.faces.push(face);
-        }
       }); // polygon.faces.forEach(function(face, i) {
       // 	self.showCorners(face);
       // });
-      // let customFace = new THREE.Geometry();
-      // customFace.vertices.push(polygon.vertices[0]);
-      // customFace.vertices.push(polygon.vertices[1]);
-      // customFace.vertices.push(gfx.getMidpoint(polygon.vertices[1], polygon.vertices[2]));
-      // customFace.vertices.push(gfx.getMidpoint(polygon.vertices[2], gfx.getCentroid2D(polygon)))
-      // customFace.faces.push(new THREE.Face3(0, 1, 2));
-      // customFace.faces.push(new THREE.Face3(0, 2, 3));
-      // let customMesh = new THREE.Mesh(customFace, greenMaterial);
-      // customFace.translate(0, .05, 0);
-      // scene.add(customMesh);
-      //console.log(polygon.faces)
 
       polygonMesh = new THREE.Mesh(polygon, faceMaterial);
       scene.add(polygonMesh);
@@ -336,7 +271,64 @@ module.exports = function () {
         if (typeof arrows[arrows.length - 1].start !== 'undefined' && typeof arrows[arrows.length - 1].end !== 'undefined') {
           this.showArrow(arrows[arrows.length - 1].start, arrows[arrows.length - 1].end, scene);
           self.calculatePolyloop();
+          self.updateStructure();
         }
+      }
+    },
+    getNextVertexPair: function getNextVertexPair(arrow) {
+      // Find vector with smallest positive and greatest negative projection onto infinite line to find the two closest intersecting points
+      var self = this;
+      var result = [];
+      var intersectingPoints = [];
+      arrows.forEach(function (otherArrow) {
+        if (arrow !== otherArrow) intersectingPoints.push(self.intersection(arrow.line, otherArrow.line));
+      });
+      console.log('intersectingPoints: ', intersectingPoints);
+      var min = 100000000,
+          max = -100000000;
+      var minIndex = 0,
+          maxIndex = 0;
+      intersectingPoints.forEach(function (point, index) {
+        var unitArrow = gfx.createVector(arrow.start, arrow.end).normalize();
+        var pointVec = gfx.createVector(arrow.start, point);
+        var dotResult = unitArrow.dot(pointVec, unitArrow);
+
+        if (dotResult > 0 && dotResult < min) {
+          min = dotResult;
+          minIndex = index;
+        }
+
+        if (dotResult < 0 && dotResult > max) {
+          max = dotResult;
+          maxIndex = index;
+        }
+      });
+      if (intersectingPoints[maxIndex]) result.push(intersectingPoints[maxIndex]);
+      if (intersectingPoints[minIndex]) result.push(intersectingPoints[minIndex]);
+      if (intersectingPoints.length == 1) result.pop();
+      console.log('result: ', result);
+      if (result.length) return result;
+    },
+    updateStructure: function updateStructure() {
+      var self = this;
+      var newVertices = [];
+      newVertices = self.getNextVertexPair(arrows[arrows.length - 1]);
+      console.log('newVertices result: ', newVertices);
+      if (newVertices) newVertices.forEach(function (newVertex) {
+        gfx.showPoint(newVertex, scene, new THREE.Color('purple'));
+        gfx.labelPoint(newVertex, 'v' + polygon.vertices.length.toString(), scene, 0xff0000);
+        polygon.vertices.push(newVertex);
+      });
+
+      if (polygon.vertices.length > 1 && polygon.vertices.length % 3 === 0) {
+        console.log('add face');
+        var face = new THREE.Face3(0, 1, 2);
+        polygon.faces.push(face); // let customFace = new THREE.Geometry();
+        // customFace.vertices.push(polygon.vertices[0], polygon.vertices[1], polygon.vertices[2]);
+        // gfx.showPoints(customFace, scene, 0x0000ff);
+        // self.drawConvexFace(customFace, faceMaterial);
+        // console.log(polygon.vertices[0], polygon.vertices[1], polygon.vertices[2]);
+        //console.log(customFace);
       }
     },
     showArrow: function showArrow(start, end, scene) {

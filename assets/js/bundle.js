@@ -57,8 +57,7 @@ module.exports = function () {
       scene = gfx.setUpScene(scene);
       renderer = gfx.setUpRenderer(renderer);
       camera = gfx.setUpCamera(camera);
-      floor = gfx.addFloor(this.settings.floorSize, scene, this.settings.colors.worldColor, this.settings.colors.gridColor); //gfx.enableStats(stats);
-
+      floor = gfx.addFloor(this.settings.floorSize, scene, this.settings.colors.worldColor, this.settings.colors.gridColor);
       controls = gfx.enableControls(controls, renderer, camera);
       gfx.resizeRendererOnWindowResize(renderer, camera);
       gfx.setUpLights(scene);
@@ -70,7 +69,6 @@ module.exports = function () {
         requestAnimationFrame(animate);
         renderer.render(scene, camera);
         controls.update();
-        stats.update(); //geometry.verticesNeedUpdate = true;
       };
 
       animate();
@@ -99,7 +97,8 @@ module.exports = function () {
       gfx.showPoint(new THREE.Vector3(-40, 0, -20), scene, 0xff0000);
       geometry.vertices.push(new THREE.Vector3(-40, 0, -40), new THREE.Vector3(-20, 0, -40), new THREE.Vector3(-40, 0, -20), new THREE.Vector3(-25, 0, -25));
       gfx.showPoints(geometry, scene, 0xff0000);
-      self.drawConvexFace(geometry, faceMaterial);
+      var testFace = self.drawConvexFace(geometry, faceMaterial);
+      scene.add(testFace);
     },
     drawConvexFace: function drawConvexFace(geometry, material) {
       var self = this;
@@ -110,7 +109,7 @@ module.exports = function () {
       }
 
       var mesh = new THREE.Mesh(sortedGeometry, material);
-      scene.add(mesh);
+      return mesh;
     },
     sortVerticesClockwise: function sortVerticesClockwise(geometry) {
       var self = this;
@@ -229,16 +228,12 @@ module.exports = function () {
       fontPath = 'assets/vendors/js/three.js/examples/fonts/helvetiker_regular.typeface.json';
       loader.load(fontPath, function (font) {
         // success event
-        if (gfx.appSettings.errorLogging) console.log('Fonts loaded successfully.');
         gfx.appSettings.font.fontStyle.font = font;
         self.begin();
         if (gfx.appSettings.axesHelper.activateAxesHelper) gfx.labelAxes(scene);
-      }, function (event) {
-        // in progress event.
-        if (gfx.appSettings.errorLogging) console.log('Attempting to load font JSON now...');
-      }, function (event) {
+      }, function (event) {}, // in progress event
+      function (event) {
         // error event
-        if (gfx.appSettings.errorLogging) console.log('Error loading fonts. Webserver required due to CORS policy.');
         gfx.appSettings.font.enable = false;
         self.begin();
       });
@@ -283,7 +278,6 @@ module.exports = function () {
       arrows.forEach(function (otherArrow) {
         if (arrow !== otherArrow) intersectingPoints.push(self.intersection(arrow.line, otherArrow.line));
       });
-      console.log('intersectingPoints: ', intersectingPoints);
       var min = 100000000,
           max = -100000000;
       var minIndex = 0,
@@ -306,14 +300,12 @@ module.exports = function () {
       if (intersectingPoints[maxIndex]) result.push(intersectingPoints[maxIndex]);
       if (intersectingPoints[minIndex]) result.push(intersectingPoints[minIndex]);
       if (intersectingPoints.length == 1) result.pop();
-      console.log('result: ', result);
       if (result.length) return result;
     },
     updateStructure: function updateStructure() {
       var self = this;
       var newVertices = [];
       newVertices = self.getNextVertexPair(arrows[arrows.length - 1]);
-      console.log('newVertices result: ', newVertices);
       if (newVertices) newVertices.forEach(function (newVertex) {
         gfx.showPoint(newVertex, scene, new THREE.Color('purple'));
         gfx.labelPoint(newVertex, 'v' + polygon.vertices.length.toString(), scene, 0xff0000);
@@ -323,12 +315,15 @@ module.exports = function () {
       if (polygon.vertices.length > 1 && polygon.vertices.length % 3 === 0) {
         console.log('add face');
         var face = new THREE.Face3(0, 1, 2);
-        polygon.faces.push(face); // let customFace = new THREE.Geometry();
-        // customFace.vertices.push(polygon.vertices[0], polygon.vertices[1], polygon.vertices[2]);
-        // gfx.showPoints(customFace, scene, 0x0000ff);
-        // self.drawConvexFace(customFace, faceMaterial);
-        // console.log(polygon.vertices[0], polygon.vertices[1], polygon.vertices[2]);
-        //console.log(customFace);
+        polygon.faces.push(face);
+        var customFace = new THREE.Geometry();
+        customFace.vertices.push(polygon.vertices[0], polygon.vertices[1], polygon.vertices[2]);
+        gfx.showPoints(customFace, scene, 0x0000ff);
+        var customFaceMesh = self.drawConvexFace(customFace, faceMaterial);
+        console.log(polygon.vertices); // polygon.customFace.geometry.push(customFace);
+        // polygon.customFace.mesh.push(customFaceMesh);
+
+        scene.add(customFaceMesh);
       }
     },
     showArrow: function showArrow(start, end, scene) {

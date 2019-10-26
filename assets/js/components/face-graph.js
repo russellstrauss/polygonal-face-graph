@@ -113,16 +113,18 @@ module.exports = function() {
 			
 			let self = this;
 			
-			geometry = self.sortVerticesClockwise(geometry);
+			let sortedGeometry = self.sortVerticesClockwise(geometry);
+			// sortedGeometry.vertices.forEach(function(vertex) {
+			// 	console.log(vertex.angle);
+			// });
 			
 			gfx.labelPoint(geometry.vertices[0], (0).toString(), scene);
-			for (let i = 1; i < geometry.vertices.length - 1; i += 1) {
+			for (let i = 1; i < sortedGeometry.vertices.length - 1; i += 1) {
 				gfx.labelPoint(geometry.vertices[i], i.toString(), scene);
-				geometry.faces.push(new THREE.Face3(0, i, i + 1));
+				sortedGeometry.faces.push(new THREE.Face3(0, i, i + 1));
 			}
-			let mesh = new THREE.Mesh(geometry, material);
+			let mesh = new THREE.Mesh(sortedGeometry, material);
 			scene.add(mesh);
-			
 			
 			gfx.labelPoint(geometry.vertices[geometry.vertices.length - 1], (geometry.vertices.length - 1).toString(), scene);
 		},
@@ -142,17 +144,21 @@ module.exports = function() {
 			midpoint.y /= geometry.vertices.length;
 			midpoint.z /= geometry.vertices.length;
 			
-			geometry.vertices.forEach(function(vertex) {
+			let sorted = geometry.clone();
+			sorted.vertices.forEach(function(vertex) {
 				
 				let vec = gfx.createVector(midpoint, vertex);
-				let vecNext = gfx.createVector(midpoint, self.next(geometry.vertices, vertex));
+				let vecNext = gfx.createVector(midpoint, self.next(sorted.vertices, vertex));
 				let angle = gfx.getAngleBetweenVectors(vec, vecNext);
 				vertex.angle = angle;
 			});
 			
-			geometry.vertices.sort((a, b) => a.angle - b.angle);
+			sorted.vertices.sort((a, b) => a.angle - b.angle);
+			sorted.vertices.forEach(function(vertex) {
+				console.log(vertex.angle);
+			});
 			
-			return geometry;
+			return sorted;
 		},
 		
 		getNextVertexPair: function(arrow) { // Find vector with smallest positive and greatest negative projection onto infinite line to find the two closest intersecting points

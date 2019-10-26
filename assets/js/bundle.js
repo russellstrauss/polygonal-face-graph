@@ -103,15 +103,18 @@ module.exports = function () {
     },
     drawConvexFace: function drawConvexFace(geometry, material) {
       var self = this;
-      geometry = self.sortVerticesClockwise(geometry);
+      var sortedGeometry = self.sortVerticesClockwise(geometry); // sortedGeometry.vertices.forEach(function(vertex) {
+      // 	console.log(vertex.angle);
+      // });
+
       gfx.labelPoint(geometry.vertices[0], 0 .toString(), scene);
 
-      for (var i = 1; i < geometry.vertices.length - 1; i += 1) {
+      for (var i = 1; i < sortedGeometry.vertices.length - 1; i += 1) {
         gfx.labelPoint(geometry.vertices[i], i.toString(), scene);
-        geometry.faces.push(new THREE.Face3(0, i, i + 1));
+        sortedGeometry.faces.push(new THREE.Face3(0, i, i + 1));
       }
 
-      var mesh = new THREE.Mesh(geometry, material);
+      var mesh = new THREE.Mesh(sortedGeometry, material);
       scene.add(mesh);
       gfx.labelPoint(geometry.vertices[geometry.vertices.length - 1], (geometry.vertices.length - 1).toString(), scene);
     },
@@ -126,16 +129,20 @@ module.exports = function () {
       midpoint.x /= geometry.vertices.length;
       midpoint.y /= geometry.vertices.length;
       midpoint.z /= geometry.vertices.length;
-      geometry.vertices.forEach(function (vertex) {
+      var sorted = geometry.clone();
+      sorted.vertices.forEach(function (vertex) {
         var vec = gfx.createVector(midpoint, vertex);
-        var vecNext = gfx.createVector(midpoint, self.next(geometry.vertices, vertex));
+        var vecNext = gfx.createVector(midpoint, self.next(sorted.vertices, vertex));
         var angle = gfx.getAngleBetweenVectors(vec, vecNext);
         vertex.angle = angle;
       });
-      geometry.vertices.sort(function (a, b) {
+      sorted.vertices.sort(function (a, b) {
         return a.angle - b.angle;
       });
-      return geometry;
+      sorted.vertices.forEach(function (vertex) {
+        console.log(vertex.angle);
+      });
+      return sorted;
     },
     getNextVertexPair: function getNextVertexPair(arrow) {
       // Find vector with smallest positive and greatest negative projection onto infinite line to find the two closest intersecting points

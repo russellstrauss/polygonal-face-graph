@@ -1,4 +1,4 @@
-var Scene = require('./components/scene.js');
+var FaceGraph = require('./components/face-graph.js');
 var Utilities = require('./utils.js');
 var Graphics = require('./graphics.js');
 
@@ -6,7 +6,7 @@ var Graphics = require('./graphics.js');
 	
 	document.addEventListener('DOMContentLoaded',function(){
 
-		Scene().init();
+		FaceGraph().init();
 	});
 	
 })();

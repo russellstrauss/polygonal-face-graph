@@ -95,6 +95,47 @@ module.exports = function () {
       //arrows.push({start: new THREE.Vector3(0, self.settings.zBuffer, 0), end: new THREE.Vector3(-5, self.settings.zBuffer, -5)});
 
       self.calculatePolyloop();
+      var geometry = new THREE.Geometry();
+      gfx.showPoint(new THREE.Vector3(-40, 0, -20), scene, 0xff0000);
+      geometry.vertices.push(new THREE.Vector3(-40, 0, -40), new THREE.Vector3(-20, 0, -40), new THREE.Vector3(-40, 0, -20), new THREE.Vector3(-25, 0, -25));
+      gfx.showPoints(geometry, scene, 0xff0000);
+      self.drawConvexFace(geometry, faceMaterial);
+    },
+    drawConvexFace: function drawConvexFace(geometry, material) {
+      var self = this;
+      geometry = self.sortVerticesClockwise(geometry);
+      gfx.labelPoint(geometry.vertices[0], 0 .toString(), scene);
+
+      for (var i = 1; i < geometry.vertices.length - 1; i += 1) {
+        gfx.labelPoint(geometry.vertices[i], i.toString(), scene);
+        geometry.faces.push(new THREE.Face3(0, i, i + 1));
+      }
+
+      var mesh = new THREE.Mesh(geometry, material);
+      scene.add(mesh);
+      gfx.labelPoint(geometry.vertices[geometry.vertices.length - 1], (geometry.vertices.length - 1).toString(), scene);
+    },
+    sortVerticesClockwise: function sortVerticesClockwise(geometry) {
+      var self = this;
+      var midpoint = new THREE.Vector3(0, 0, 0);
+      geometry.vertices.forEach(function (vertex) {
+        midpoint.x += vertex.x;
+        midpoint.y += vertex.y;
+        midpoint.z += vertex.z;
+      });
+      midpoint.x /= geometry.vertices.length;
+      midpoint.y /= geometry.vertices.length;
+      midpoint.z /= geometry.vertices.length;
+      geometry.vertices.forEach(function (vertex) {
+        var vec = gfx.createVector(midpoint, vertex);
+        var vecNext = gfx.createVector(midpoint, self.next(geometry.vertices, vertex));
+        var angle = gfx.getAngleBetweenVectors(vec, vecNext);
+        vertex.angle = angle;
+      });
+      geometry.vertices.sort(function (a, b) {
+        return a.angle - b.angle;
+      });
+      return geometry;
     },
     getNextVertexPair: function getNextVertexPair(arrow) {
       // Find vector with smallest positive and greatest negative projection onto infinite line to find the two closest intersecting points
@@ -174,6 +215,12 @@ module.exports = function () {
         return element === currentArrow;
       });
       return arrows[(arrowIndex + 1) % arrows.length];
+    },
+    next: function next(array, currentItem) {
+      var itemIndex = array.findIndex(function (element) {
+        return element === currentItem;
+      });
+      return array[(itemIndex + 1) % array.length];
     },
     nextVertex: function nextVertex(currentVertex) {
       var vertexIndex = polygon.vertices.findIndex(function (element) {
@@ -775,7 +822,7 @@ module.exports = function () {
 },{}],3:[function(require,module,exports){
 "use strict";
 
-var Scene = require('./components/scene.js');
+var FaceGraph = require('./components/face-graph.js');
 
 var Utilities = require('./utils.js');
 
@@ -783,11 +830,11 @@ var Graphics = require('./graphics.js');
 
 (function () {
   document.addEventListener('DOMContentLoaded', function () {
-    Scene().init();
+    FaceGraph().init();
   });
 })();
 
-},{"./components/scene.js":1,"./graphics.js":2,"./utils.js":4}],4:[function(require,module,exports){
+},{"./components/face-graph.js":1,"./graphics.js":2,"./utils.js":4}],4:[function(require,module,exports){
 "use strict";
 
 (function () {

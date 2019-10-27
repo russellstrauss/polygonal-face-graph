@@ -48,7 +48,8 @@ module.exports = function () {
       },
       floorSize: 100,
       zBuffer: .1,
-      infiniteScale: 50000
+      infiniteScale: 50000 //infiniteScale: 50
+
     },
     init: function init() {
       var self = this;
@@ -161,12 +162,36 @@ module.exports = function () {
       var infiniteFaceGeometry = new THREE.Geometry();
       var corner = polygon.vertices[0];
       var yAxis = new THREE.Vector3(0, 1, 0);
-      var direction1 = gfx.createVector(arrows[0].end, arrows[0].start).setLength(self.settings.infiniteScale);
-      var direction2 = gfx.createVector(arrows[1].end, arrows[1].start).setLength(self.settings.infiniteScale);
+      var arrow0 = gfx.createVector(arrows[0].start, arrows[0].end);
+      var arrow1 = gfx.createVector(arrows[1].start, arrows[1].end);
+      var angle1 = 0,
+          angle2 = 0;
+
+      if (gfx.getAngleBetweenVectors(arrow0, arrow1) > Math.PI / 2) {
+        angle1 = -gfx.getAngleBetweenVectors(arrow0, arrow1);
+        angle2 = Math.PI + gfx.getAngleBetweenVectors(arrow0, arrow1);
+        console.log('condition 1');
+      } else {
+        angle1 = Math.PI + gfx.getAngleBetweenVectors(arrow0, arrow1);
+        angle2 = -gfx.getAngleBetweenVectors(arrow0, arrow1);
+        console.log('condition 2');
+      }
+
+      console.log(self.degrees(gfx.getAngleBetweenVectors(arrow0, arrow1)));
+      var direction1 = gfx.createVector(corner, gfx.movePoint(corner, arrow0)).setLength(self.settings.infiniteScale);
+      var direction2 = gfx.createVector(corner, gfx.movePoint(corner, arrow1)).setLength(self.settings.infiniteScale); // let direction1 = gfx.createVector(corner, gfx.movePoint(corner, arrow0)).setLength(self.settings.infiniteScale).applyAxisAngle(yAxis, angle1);
+      // let direction2 = gfx.createVector(corner, gfx.movePoint(corner, arrow1)).setLength(self.settings.infiniteScale).applyAxisAngle(yAxis, angle2);
+
       var backCorner1 = gfx.movePoint(corner.clone(), direction1);
       var backCorner2 = gfx.movePoint(corner.clone(), direction2);
+      gfx.showVector(direction1, corner, scene, 0x0000ff);
+      gfx.showVector(direction2, corner, scene, new THREE.Color('purple')); //gfx.showPoint(backCorner1, scene, 0x0000ff);
+
       infiniteFaceGeometry.vertices.push(corner, backCorner1, backCorner2);
       return infiniteFaceGeometry;
+    },
+    degrees: function degrees(radians) {
+      return radians * 180 / Math.PI;
     },
     nextArrow: function nextArrow(currentArrow) {
       var arrowIndex = arrows.findIndex(function (element) {

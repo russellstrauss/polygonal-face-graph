@@ -194,15 +194,15 @@ module.exports = function() {
 			}
 			console.log(self.degrees(gfx.getAngleBetweenVectors(arrow0, arrow1)));
 			
-			let direction1 = gfx.createVector(corner, gfx.movePoint(corner, arrow0)).setLength(self.settings.infiniteScale);
-			let direction2 = gfx.createVector(corner, gfx.movePoint(corner, arrow1)).setLength(self.settings.infiniteScale);
-			// let direction1 = gfx.createVector(corner, gfx.movePoint(corner, arrow0)).setLength(self.settings.infiniteScale).applyAxisAngle(yAxis, angle1);
-			// let direction2 = gfx.createVector(corner, gfx.movePoint(corner, arrow1)).setLength(self.settings.infiniteScale).applyAxisAngle(yAxis, angle2);
+			// let direction1 = gfx.createVector(corner, gfx.movePoint(corner, arrow0)).setLength(self.settings.infiniteScale);
+			// let direction2 = gfx.createVector(corner, gfx.movePoint(corner, arrow1)).setLength(self.settings.infiniteScale);
+			let direction1 = gfx.createVector(corner, gfx.movePoint(corner, arrow0)).setLength(self.settings.infiniteScale).applyAxisAngle(yAxis, angle1);
+			let direction2 = gfx.createVector(corner, gfx.movePoint(corner, arrow1)).setLength(self.settings.infiniteScale).applyAxisAngle(yAxis, angle2);
 			
 			let backCorner1 = gfx.movePoint(corner.clone(), direction1);
 			let backCorner2 = gfx.movePoint(corner.clone(), direction2);
 			
-			gfx.showVector(direction1, corner, scene, 0x0000ff);
+			gfx.showVector(direction1, corner, scene, new THREE.Color('blue'));
 			gfx.showVector(direction2, corner, scene, new THREE.Color('purple'));
 			//gfx.showPoint(backCorner1, scene, 0x0000ff);
 			

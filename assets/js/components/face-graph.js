@@ -176,38 +176,35 @@ module.exports = function() {
 			let self = this;
 			let infiniteFaceGeometry = new THREE.Geometry();
 			let corner = polygon.vertices[0];
-			
 			let yAxis = new THREE.Vector3(0, 1, 0);
 			let arrow0 = gfx.createVector(arrows[0].start, arrows[0].end);
 			let arrow1 = gfx.createVector(arrows[1].start, arrows[1].end);
+
+			let planeCornerCandidatesA0 = [];
+			let planeCornerCandidatesA1 = [];
 			
-			let angle1 = 0, angle2 = 0;
-			if (gfx.getAngleBetweenVectors(arrow0, arrow1) > Math.PI / 2) {
-				angle1 = -gfx.getAngleBetweenVectors(arrow0, arrow1);
-				angle2 = (Math.PI) + gfx.getAngleBetweenVectors(arrow0, arrow1);
-				console.log('condition 1');
-			}
-			else {
-				angle1 = Math.PI + gfx.getAngleBetweenVectors(arrow0, arrow1);
-				angle2 = -gfx.getAngleBetweenVectors(arrow0, arrow1);
-				console.log('condition 2');
-			}
-			console.log(self.degrees(gfx.getAngleBetweenVectors(arrow0, arrow1)));
+			let directionA1 = gfx.createVector(corner, gfx.movePoint(corner, arrow1)).setLength(self.settings.infiniteScale);
+			let negativeDirectionA1 = gfx.createVector(corner, gfx.movePoint(corner, arrow1.applyAxisAngle(yAxis, Math.PI))).setLength(self.settings.infiniteScale);
+			let directionA0 = gfx.createVector(corner, gfx.movePoint(corner, arrow0)).setLength(self.settings.infiniteScale);
+			let negativeDirectionA0 = gfx.createVector(corner, gfx.movePoint(corner, arrow0.applyAxisAngle(yAxis, Math.PI))).setLength(self.settings.infiniteScale);
 			
-			// let direction1 = gfx.createVector(corner, gfx.movePoint(corner, arrow0)).setLength(self.settings.infiniteScale);
-			// let direction2 = gfx.createVector(corner, gfx.movePoint(corner, arrow1)).setLength(self.settings.infiniteScale);
-			let direction1 = gfx.createVector(corner, gfx.movePoint(corner, arrow0)).setLength(self.settings.infiniteScale).applyAxisAngle(yAxis, angle1);
-			let direction2 = gfx.createVector(corner, gfx.movePoint(corner, arrow1)).setLength(self.settings.infiniteScale).applyAxisAngle(yAxis, angle2);
+			planeCornerCandidatesA1.push(
+				gfx.movePoint(corner, directionA1),
+				gfx.movePoint(corner, negativeDirectionA1)
+			);
+			planeCornerCandidatesA0.push(
+				gfx.movePoint(corner, directionA0),
+				gfx.movePoint(corner, negativeDirectionA0)
+			);
 			
-			let backCorner1 = gfx.movePoint(corner.clone(), direction1);
-			let backCorner2 = gfx.movePoint(corner.clone(), direction2);
+			planeCornerCandidatesA1 = planeCornerCandidatesA1.filter(function(candidate) {
+				return !gfx.isRightTurn(arrows[0].start, arrows[0].end, candidate);
+			});
+			planeCornerCandidatesA0 = planeCornerCandidatesA0.filter(function(candidate) {
+				return !gfx.isRightTurn(arrows[1].start, arrows[1].end, candidate);
+			});
 			
-			gfx.showVector(direction1, corner, scene, new THREE.Color('blue'));
-			gfx.showVector(direction2, corner, scene, new THREE.Color('purple'));
-			//gfx.showPoint(backCorner1, scene, 0x0000ff);
-			
-			infiniteFaceGeometry.vertices.push(corner, backCorner1, backCorner2);
-			
+			infiniteFaceGeometry.vertices.push(corner, planeCornerCandidatesA0[0], planeCornerCandidatesA1[0]);
 			return infiniteFaceGeometry;
 		},
 		

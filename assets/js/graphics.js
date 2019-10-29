@@ -25,14 +25,14 @@
 				errorLogging: false
 			},
 
-			activateAxesHelper: function(scene) {
+			activateAxesHelper: function() {
 			
 				let self = this;
 				let axesHelper = new THREE.AxesHelper(gfx.appSettings.axesHelper.axisLength);
 				scene.add(axesHelper);
 			},
 
-			activateLightHelpers: function(scene, lights) {
+			activateLightHelpers: function(lights) {
 
 				for (let i = 0; i < lights.length; i++) {
 					let helper = new THREE.DirectionalLightHelper(lights[i], 5, 0x00000);
@@ -40,7 +40,7 @@
 				}
 			},
 
-			addFloor: function(size, scene, worldColor, gridColor) {
+			addFloor: function(size, worldColor, gridColor) {
 
 				var planeGeometry = new THREE.PlaneBufferGeometry(size, size);
 				planeGeometry.rotateX(-Math.PI / 2);
@@ -107,7 +107,7 @@
 				let rayDirection = new THREE.Vector3(10, 0, 10);
 				let testRay = raycaster.set(pt, rayDirection);
 				
-				gfx.drawLine(pt, rayDirection.clone().setLength(1000), scene);
+				gfx.drawLine(pt, rayDirection.clone().setLength(1000));
 			},
 			
 			getMagnitude: function(vector) {
@@ -219,7 +219,7 @@
 	
 				if (gfx.appSettings.axesHelper.activateAxesHelper) {
 	
-					gfx.activateAxesHelper(scene);
+					gfx.activateAxesHelper();
 				}
 				return scene;
 			},
@@ -236,16 +236,16 @@
 				return camera;
 			},
 
-			showPoints: function(geometry, scene, color, opacity) {
+			showPoints: function(geometry, color, opacity) {
 			
 				let self = this;
 				
 				for (let i = 0; i < geometry.vertices.length; i++) {
-					gfx.showPoint(geometry.vertices[i], scene, color, opacity);
+					gfx.showPoint(geometry.vertices[i], color, opacity);
 				}
 			},
 
-			showPoint: function(pt, scene, color, opacity) {
+			showPoint: function(pt, color, opacity) {
 				color = color || 0xff0000;
 				opacity = opacity || 1;
 				let dotGeometry = new THREE.Geometry();
@@ -263,7 +263,7 @@
 				return dot;
 			},
 
-			showVector: function(vector, origin, scene, color) {
+			showVector: function(vector, origin, color) {
 			
 				color = color || 0xff0000;
 				let arrowHelper = new THREE.ArrowHelper(vector, origin, vector.length(), color);
@@ -271,7 +271,7 @@
 			},
 
 			/* 	Inputs: pt - point in space to label, in the form of object with x, y, and z properties; label - text content for label; color - optional */
-			labelPoint: function(pt, label, scene, color) {
+			labelPoint: function(pt, label, color) {
 				
 				let self = this;
 				if (gfx.appSettings.font.enable) {
@@ -285,7 +285,7 @@
 				}
 			},
 
-			drawLine: function(pt1, pt2, scene, color) {
+			drawLine: function(pt1, pt2, color) {
 				
 				color = color || 0x0000ff;
 				
@@ -304,7 +304,7 @@
 				return Math.sqrt(squirt);
 			},
 
-			labelAxes: function(scene) {
+			labelAxes: function() {
 			
 				let self = this;
 				if (gfx.appSettings.font.enable) {
@@ -347,7 +347,7 @@
 				}, 250));
 			},
 
-			resetScene: function(scope, scene) {
+			resetScene: function(scope) {
 			
 				scope.settings.stepCount = 0;
 				
@@ -356,9 +356,9 @@
 					scene.remove(obj);
 				}
 				
-				gfx.addFloor(scene);
+				gfx.addFloor();
 				scope.addTetrahedron();
-				gfx.setUpLights(scene);
+				gfx.setUpLights();
 				gfx.setCameraLocation(camera, self.settings.defaultCameraLocation);
 			},
 
@@ -380,7 +380,7 @@
 				document.body.appendChild(stats.dom);
 			},
 
-			setUpLights: function(scene) {
+			setUpLights: function() {
 
 				let self = this;
 				let lights = [];
@@ -433,7 +433,7 @@
 				return result;
 			},
 			
-			getCentroid2D: function(geometry, scene) { // Calculating centroid of a tetrahedron: https://www.youtube.com/watch?v=Infxzuqd_F4
+			getCentroid2D: function(geometry) { // Calculating centroid of a tetrahedron: https://www.youtube.com/watch?v=Infxzuqd_F4
 			
 				let result = new THREE.Vector3();
 				let x = 0, y = 0, z = 0;

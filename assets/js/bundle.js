@@ -60,10 +60,10 @@ module.exports = function () {
       scene = gfx.setUpScene();
       renderer = gfx.setUpRenderer(renderer);
       camera = gfx.setUpCamera(camera);
-      floor = gfx.addFloor(this.settings.floorSize, scene, this.settings.colors.worldColor, this.settings.colors.gridColor);
+      floor = gfx.addFloor(this.settings.floorSize, this.settings.colors.worldColor, this.settings.colors.gridColor);
       controls = gfx.enableControls(controls, renderer, camera);
       gfx.resizeRendererOnWindowResize(renderer, camera);
-      gfx.setUpLights(scene);
+      gfx.setUpLights();
       gfx.setCameraLocation(camera, self.settings.defaultCameraLocation);
       self.setUpButtons();
       self.sandbox();
@@ -86,19 +86,19 @@ module.exports = function () {
       bounds.bottomLeft = new THREE.Vector3(-this.settings.floorSize / 2, 0, this.settings.floorSize / 2);
       bounds.topLeft = new THREE.Vector3(-this.settings.floorSize / 2, 0, -this.settings.floorSize / 2);
       bounds.topRight = new THREE.Vector3(this.settings.floorSize / 2, 0, -this.settings.floorSize / 2);
-      gfx.labelPoint(new THREE.Vector3(-this.settings.floorSize / 2 - 5, 0, 0), '-X', scene, red);
-      gfx.labelPoint(new THREE.Vector3(this.settings.floorSize / 2 + 1.5, 0, 0), '+X', scene, red);
-      gfx.labelPoint(new THREE.Vector3(0, 0, -this.settings.floorSize / 2 - 2), '-Z', scene, red);
-      gfx.labelPoint(new THREE.Vector3(0, 0, this.settings.floorSize / 2 + 4.5), '+Z', scene, red);
+      gfx.labelPoint(new THREE.Vector3(-this.settings.floorSize / 2 - 5, 0, 0), '-X', red);
+      gfx.labelPoint(new THREE.Vector3(this.settings.floorSize / 2 + 1.5, 0, 0), '+X', red);
+      gfx.labelPoint(new THREE.Vector3(0, 0, -this.settings.floorSize / 2 - 2), '-Z', red);
+      gfx.labelPoint(new THREE.Vector3(0, 0, this.settings.floorSize / 2 + 4.5), '+Z', red);
       var geometry = new THREE.Geometry();
-      gfx.showPoint(new THREE.Vector3(-40, 0, -20), scene, 0xff0000);
+      gfx.showPoint(new THREE.Vector3(-40, 0, -20), 0xff0000);
       geometry.vertices.push(new THREE.Vector3(-40, 0, -40), new THREE.Vector3(-20, 0, -40), new THREE.Vector3(-40, 0, -20), new THREE.Vector3(-25, 0, -25));
-      gfx.showPoints(geometry, scene, 0xff0000);
+      gfx.showPoints(geometry, 0xff0000);
       var testMesh = self.drawConvexFace(geometry, faceMaterial);
       testMesh.position.set(testMesh.position.x, -.01, testMesh.position.z);
       scene.add(testMesh);
       var innerPoint = new THREE.Vector3(-30, 0, -30);
-      gfx.showPoint(innerPoint, scene, red);
+      gfx.showPoint(innerPoint, red);
       gfx.pointInPolygon(innerPoint, geometry);
       self.calculatePolyloop();
     },
@@ -145,8 +145,8 @@ module.exports = function () {
         arrows[i].line = self.createLine(arrows[i].start, arrows[i].end);
       });
       arrows.forEach(function (arrow, i) {
-        self.showArrow(arrows[i].start, arrows[i].end, scene, 0x111111 * i);
-        gfx.labelPoint(arrows[i].start, 'arrow' + i.toString(), scene, red);
+        self.showArrow(arrows[i].start, arrows[i].end, 0x111111 * i);
+        gfx.labelPoint(arrows[i].start, 'arrow' + i.toString(), red);
       }); // polygon.faces.forEach(function(face, i) {
       // 	self.showCorners(face);
       // });
@@ -232,7 +232,7 @@ module.exports = function () {
         cornerLabelPosition.y += self.settings.zBuffer;
         cornerLabelPosition.x -= 1; // text centering offset
 
-        gfx.labelPoint(cornerLabelPosition, 'c' + faceVertexIndices[_i].toString(), scene, 0xff0000);
+        gfx.labelPoint(cornerLabelPosition, 'c' + faceVertexIndices[_i].toString(), 0xff0000);
       }
     },
     findPointsOnBounds: function findPointsOnBounds(line) {
@@ -244,22 +244,22 @@ module.exports = function () {
 
       if (top.x > -this.settings.floorSize / 2 && top.y > -this.settings.floorSize / 2) {
         result.push(top);
-        gfx.showPoint(top, scene);
+        gfx.showPoint(top);
       }
 
       if (bottom.x > -this.settings.floorSize / 2 + 1 && bottom.y < this.settings.floorSize / 2 + 1) {
         result.push(bottom);
-        gfx.showPoint(bottom, scene);
+        gfx.showPoint(bottom);
       }
 
       if (left.x > -this.settings.floorSize / 2 - 1 && left.y > -this.settings.floorSize / 2 - 1) {
         result.push(left);
-        gfx.showPoint(left, scene);
+        gfx.showPoint(left);
       }
 
       if (right.x < this.settings.floorSize / 2 + 1 && right.y < this.settings.floorSize / 2 + 1) {
         result.push(right);
-        gfx.showPoint(right, scene);
+        gfx.showPoint(right);
       }
 
       return result;
@@ -273,7 +273,7 @@ module.exports = function () {
         // success event
         gfx.appSettings.font.fontStyle.font = font;
         self.begin();
-        if (gfx.appSettings.axesHelper.activateAxesHelper) gfx.labelAxes(scene);
+        if (gfx.appSettings.axesHelper.activateAxesHelper) gfx.labelAxes();
       }, function (event) {}, // in progress event
       function (event) {
         // error event
@@ -299,7 +299,7 @@ module.exports = function () {
           if (previousArrowPoint) scene.remove(previousArrowPoint);
           arrows[arrows.length - 1].end = clickedPoint;
         } else {
-          previousArrowPoint = gfx.showPoint(clickedPoint, scene, red);
+          previousArrowPoint = gfx.showPoint(clickedPoint, red);
           arrows.push({
             start: clickedPoint,
             end: undefined
@@ -307,7 +307,7 @@ module.exports = function () {
         }
 
         if (typeof arrows[arrows.length - 1].start !== 'undefined' && typeof arrows[arrows.length - 1].end !== 'undefined') {
-          this.showArrow(arrows[arrows.length - 1].start, arrows[arrows.length - 1].end, scene);
+          self.showArrow(arrows[arrows.length - 1].start, arrows[arrows.length - 1].end);
           self.calculatePolyloop();
           self.updateStructure();
           scene.remove(infiniteFaceMesh);
@@ -364,8 +364,8 @@ module.exports = function () {
       var newVertices = [];
       newVertices = self.getNextVertexPair(arrows[arrows.length - 1]);
       if (newVertices) newVertices.forEach(function (newVertex) {
-        gfx.showPoint(newVertex, scene, 0xff0000);
-        gfx.labelPoint(newVertex, 'v' + polygon.vertices.length.toString(), scene, 0xff0000);
+        gfx.showPoint(newVertex, 0xff0000);
+        gfx.labelPoint(newVertex, 'v' + polygon.vertices.length.toString(), 0xff0000);
         polygon.vertices.push(newVertex);
       });
 
@@ -375,7 +375,7 @@ module.exports = function () {
         polygon.faces.push(face);
         var customFace = new THREE.Geometry();
         customFace.vertices.push(polygon.vertices[0], polygon.vertices[1], polygon.vertices[2]);
-        gfx.showPoints(customFace, scene, red);
+        gfx.showPoints(customFace, red);
         var customFaceMesh = self.drawConvexFace(customFace, faceMaterial);
         console.log(polygon.vertices); // polygon.customFace.geometry.push(customFace);
         // polygon.customFace.mesh.push(customFaceMesh);
@@ -383,8 +383,8 @@ module.exports = function () {
         scene.add(customFaceMesh);
       }
     },
-    showArrow: function showArrow(start, end, scene) {
-      gfx.drawLine(start, end, scene, this.settings.colors.arrowColor); // Draw a triangle on the end
+    showArrow: function showArrow(start, end) {
+      gfx.drawLine(start, end, this.settings.colors.arrowColor); // Draw a triangle on the end
 
       var arrowDirection = gfx.createVector(start, end);
       arrowDirection.setLength(this.settings.arrowHeadSize);
@@ -496,18 +496,18 @@ module.exports = function () {
         },
         errorLogging: false
       },
-      activateAxesHelper: function activateAxesHelper(scene) {
+      activateAxesHelper: function activateAxesHelper() {
         var self = this;
         var axesHelper = new THREE.AxesHelper(gfx.appSettings.axesHelper.axisLength);
         scene.add(axesHelper);
       },
-      activateLightHelpers: function activateLightHelpers(scene, lights) {
+      activateLightHelpers: function activateLightHelpers(lights) {
         for (var i = 0; i < lights.length; i++) {
           var helper = new THREE.DirectionalLightHelper(lights[i], 5, 0x00000);
           scene.add(helper);
         }
       },
-      addFloor: function addFloor(size, scene, worldColor, gridColor) {
+      addFloor: function addFloor(size, worldColor, gridColor) {
         var planeGeometry = new THREE.PlaneBufferGeometry(size, size);
         planeGeometry.rotateX(-Math.PI / 2);
         var planeMaterial = new THREE.ShadowMaterial();
@@ -554,7 +554,7 @@ module.exports = function () {
         var raycaster = new THREE.Raycaster();
         var rayDirection = new THREE.Vector3(10, 0, 10);
         var testRay = raycaster.set(pt, rayDirection);
-        gfx.drawLine(pt, rayDirection.clone().setLength(1000), scene);
+        gfx.drawLine(pt, rayDirection.clone().setLength(1000));
       },
       getMagnitude: function getMagnitude(vector) {
         var magnitude = Math.sqrt(Math.pow(vector.x, 2) + Math.pow(vector.y, 2) + Math.pow(vector.z, 2));
@@ -644,7 +644,7 @@ module.exports = function () {
         scene.background = new THREE.Color(0xf0f0f0);
 
         if (gfx.appSettings.axesHelper.activateAxesHelper) {
-          gfx.activateAxesHelper(scene);
+          gfx.activateAxesHelper();
         }
 
         return scene;
@@ -659,14 +659,14 @@ module.exports = function () {
         camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
         return camera;
       },
-      showPoints: function showPoints(geometry, scene, color, opacity) {
+      showPoints: function showPoints(geometry, color, opacity) {
         var self = this;
 
         for (var i = 0; i < geometry.vertices.length; i++) {
-          gfx.showPoint(geometry.vertices[i], scene, color, opacity);
+          gfx.showPoint(geometry.vertices[i], color, opacity);
         }
       },
-      showPoint: function showPoint(pt, scene, color, opacity) {
+      showPoint: function showPoint(pt, color, opacity) {
         color = color || 0xff0000;
         opacity = opacity || 1;
         var dotGeometry = new THREE.Geometry();
@@ -682,14 +682,14 @@ module.exports = function () {
         scene.add(dot);
         return dot;
       },
-      showVector: function showVector(vector, origin, scene, color) {
+      showVector: function showVector(vector, origin, color) {
         color = color || 0xff0000;
         var arrowHelper = new THREE.ArrowHelper(vector, origin, vector.length(), color);
         scene.add(arrowHelper);
       },
 
       /* 	Inputs: pt - point in space to label, in the form of object with x, y, and z properties; label - text content for label; color - optional */
-      labelPoint: function labelPoint(pt, label, scene, color) {
+      labelPoint: function labelPoint(pt, label, color) {
         var self = this;
 
         if (gfx.appSettings.font.enable) {
@@ -704,7 +704,7 @@ module.exports = function () {
           scene.add(mesh);
         }
       },
-      drawLine: function drawLine(pt1, pt2, scene, color) {
+      drawLine: function drawLine(pt1, pt2, color) {
         color = color || 0x0000ff;
         var material = new THREE.LineBasicMaterial({
           color: color
@@ -720,7 +720,7 @@ module.exports = function () {
         var squirt = Math.pow(pt2.x - pt1.x, 2) + Math.pow(pt2.y - pt1.y, 2) + Math.pow(pt2.z - pt1.z, 2);
         return Math.sqrt(squirt);
       },
-      labelAxes: function labelAxes(scene) {
+      labelAxes: function labelAxes() {
         var self = this;
 
         if (gfx.appSettings.font.enable) {
@@ -761,7 +761,7 @@ module.exports = function () {
           }
         }, 250));
       },
-      resetScene: function resetScene(scope, scene) {
+      resetScene: function resetScene(scope) {
         scope.settings.stepCount = 0;
 
         for (var i = scene.children.length - 1; i >= 0; i--) {
@@ -769,9 +769,9 @@ module.exports = function () {
           scene.remove(obj);
         }
 
-        gfx.addFloor(scene);
+        gfx.addFloor();
         scope.addTetrahedron();
-        gfx.setUpLights(scene);
+        gfx.setUpLights();
         gfx.setCameraLocation(camera, self.settings.defaultCameraLocation);
       },
       enableControls: function enableControls(controls, renderer, camera) {
@@ -791,7 +791,7 @@ module.exports = function () {
       enableStats: function enableStats(stats) {
         document.body.appendChild(stats.dom);
       },
-      setUpLights: function setUpLights(scene) {
+      setUpLights: function setUpLights() {
         var self = this;
         var lights = [];
         var color = 0xFFFFFF;
@@ -840,7 +840,7 @@ module.exports = function () {
         result.z = z / 4;
         return result;
       },
-      getCentroid2D: function getCentroid2D(geometry, scene) {
+      getCentroid2D: function getCentroid2D(geometry) {
         // Calculating centroid of a tetrahedron: https://www.youtube.com/watch?v=Infxzuqd_F4
         var result = new THREE.Vector3();
         var x = 0,

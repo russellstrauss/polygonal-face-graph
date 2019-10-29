@@ -52,10 +52,10 @@ module.exports = function() {
 			scene = gfx.setUpScene();
 			renderer = gfx.setUpRenderer(renderer);
 			camera = gfx.setUpCamera(camera);
-			floor = gfx.addFloor(this.settings.floorSize, scene, this.settings.colors.worldColor, this.settings.colors.gridColor);
+			floor = gfx.addFloor(this.settings.floorSize, this.settings.colors.worldColor, this.settings.colors.gridColor);
 			controls = gfx.enableControls(controls, renderer, camera);
 			gfx.resizeRendererOnWindowResize(renderer, camera);
-			gfx.setUpLights(scene);
+			gfx.setUpLights();
 			gfx.setCameraLocation(camera, self.settings.defaultCameraLocation);
 			self.setUpButtons();
 			self.sandbox();
@@ -82,26 +82,26 @@ module.exports = function() {
 			bounds.topLeft = new THREE.Vector3(-this.settings.floorSize/2, 0, -this.settings.floorSize/2);
 			bounds.topRight = new THREE.Vector3(this.settings.floorSize/2, 0, -this.settings.floorSize/2);
 			
-			gfx.labelPoint(new THREE.Vector3(-this.settings.floorSize/2 - 5, 0, 0), '-X', scene, red);
-			gfx.labelPoint(new THREE.Vector3(this.settings.floorSize/2 + 1.5, 0, 0), '+X', scene, red);
-			gfx.labelPoint(new THREE.Vector3(0, 0, -this.settings.floorSize/2 - 2), '-Z', scene, red);
-			gfx.labelPoint(new THREE.Vector3(0, 0, this.settings.floorSize/2 + 4.5), '+Z', scene, red);
+			gfx.labelPoint(new THREE.Vector3(-this.settings.floorSize/2 - 5, 0, 0), '-X', red);
+			gfx.labelPoint(new THREE.Vector3(this.settings.floorSize/2 + 1.5, 0, 0), '+X', red);
+			gfx.labelPoint(new THREE.Vector3(0, 0, -this.settings.floorSize/2 - 2), '-Z', red);
+			gfx.labelPoint(new THREE.Vector3(0, 0, this.settings.floorSize/2 + 4.5), '+Z', red);
 			
 			let geometry  = new THREE.Geometry();
-			gfx.showPoint(new THREE.Vector3(-40, 0, -20), scene, 0xff0000);
+			gfx.showPoint(new THREE.Vector3(-40, 0, -20), 0xff0000);
 			geometry.vertices.push(
 				new THREE.Vector3(-40, 0, -40),
 				new THREE.Vector3(-20, 0, -40),
 				new THREE.Vector3(-40, 0, -20),
 				new THREE.Vector3(-25, 0, -25)
 			);
-			gfx.showPoints(geometry, scene, 0xff0000);
+			gfx.showPoints(geometry, 0xff0000);
 			let testMesh = self.drawConvexFace(geometry, faceMaterial);
 			testMesh.position.set(testMesh.position.x, -.01, testMesh.position.z);
 			scene.add(testMesh);
 			
 			let innerPoint = new THREE.Vector3(-30, 0, -30);
-			gfx.showPoint(innerPoint, scene, red);
+			gfx.showPoint(innerPoint, red);
 			
 			gfx.pointInPolygon(innerPoint, geometry);
 			
@@ -160,8 +160,8 @@ module.exports = function() {
 			
 			arrows.forEach(function(arrow, i) {
 				
-				self.showArrow(arrows[i].start, arrows[i].end, scene, 0x111111 * i);
-				gfx.labelPoint(arrows[i].start, 'arrow' + (i).toString(), scene, red);
+				self.showArrow(arrows[i].start, arrows[i].end, 0x111111 * i);
+				gfx.labelPoint(arrows[i].start, 'arrow' + (i).toString(), red);
 			});
 			
 			// polygon.faces.forEach(function(face, i) {
@@ -274,7 +274,7 @@ module.exports = function() {
 				let cornerLabelPosition = gfx.movePoint(face.corners[i], labelDirection);
 				cornerLabelPosition.y += self.settings.zBuffer;
 				cornerLabelPosition.x -= 1; // text centering offset
-				gfx.labelPoint(cornerLabelPosition, 'c' + faceVertexIndices[i].toString(), scene, 0xff0000);
+				gfx.labelPoint(cornerLabelPosition, 'c' + faceVertexIndices[i].toString(), 0xff0000);
 			}
 		},
 		
@@ -286,19 +286,19 @@ module.exports = function() {
 			let right = this.intersection(line, bounds.right);
 			if (top.x > -this.settings.floorSize/2 && top.y > -this.settings.floorSize/2) {
 				result.push(top);
-				gfx.showPoint(top, scene);
+				gfx.showPoint(top);
 			}
 			if (bottom.x > -this.settings.floorSize/2 + 1 && bottom.y < this.settings.floorSize/2 + 1) {
 				result.push(bottom);
-				gfx.showPoint(bottom, scene);
+				gfx.showPoint(bottom);
 			}
 			if (left.x > -this.settings.floorSize/2 - 1 && left.y > -this.settings.floorSize/2 - 1) {
 				result.push(left);
-				gfx.showPoint(left, scene);
+				gfx.showPoint(left);
 			}
 			if (right.x < this.settings.floorSize/2 + 1 && right.y < this.settings.floorSize/2 + 1) {
 				result.push(right);
-				gfx.showPoint(right, scene);
+				gfx.showPoint(right);
 			}
 			return result;
 		},
@@ -314,7 +314,7 @@ module.exports = function() {
 				
 				gfx.appSettings.font.fontStyle.font = font;
 				self.begin();
-				if (gfx.appSettings.axesHelper.activateAxesHelper) gfx.labelAxes(scene);
+				if (gfx.appSettings.axesHelper.activateAxesHelper) gfx.labelAxes();
 			},
 			function(event) {}, // in progress event
 			function(event) { // error event
@@ -343,13 +343,13 @@ module.exports = function() {
 					arrows[arrows.length - 1].end = clickedPoint;
 				}
 				else {
-					previousArrowPoint = gfx.showPoint(clickedPoint, scene, red);
+					previousArrowPoint = gfx.showPoint(clickedPoint, red);
 					arrows.push({ start: clickedPoint, end: undefined});
 				}
 				
 				if (typeof arrows[arrows.length - 1].start !== 'undefined' && typeof arrows[arrows.length - 1].end !== 'undefined') {
 					
-					this.showArrow(arrows[arrows.length - 1].start, arrows[arrows.length - 1].end, scene);
+					self.showArrow(arrows[arrows.length - 1].start, arrows[arrows.length - 1].end);
 					self.calculatePolyloop();
 					self.updateStructure();
 					
@@ -416,8 +416,8 @@ module.exports = function() {
 			
 			if (newVertices) newVertices.forEach(function(newVertex) {
 				
-				gfx.showPoint(newVertex, scene, 0xff0000);
-				gfx.labelPoint(newVertex, 'v' + (polygon.vertices.length).toString(), scene, 0xff0000);
+				gfx.showPoint(newVertex, 0xff0000);
+				gfx.labelPoint(newVertex, 'v' + (polygon.vertices.length).toString(), 0xff0000);
 				polygon.vertices.push(newVertex);
 			});
 			
@@ -428,7 +428,7 @@ module.exports = function() {
 				
 				let customFace = new THREE.Geometry();
 				customFace.vertices.push(polygon.vertices[0], polygon.vertices[1], polygon.vertices[2]);
-				gfx.showPoints(customFace, scene, red);
+				gfx.showPoints(customFace, red);
 				let customFaceMesh = self.drawConvexFace(customFace, faceMaterial);
 				
 				console.log(polygon.vertices);
@@ -439,9 +439,9 @@ module.exports = function() {
 			}
 		},
 		
-		showArrow: function(start, end, scene) {
+		showArrow: function(start, end) {
 			
-			gfx.drawLine(start, end, scene, this.settings.colors.arrowColor);
+			gfx.drawLine(start, end, this.settings.colors.arrowColor);
 			// Draw a triangle on the end
 			let arrowDirection = gfx.createVector(start, end);
 			arrowDirection.setLength(this.settings.arrowHeadSize);				

@@ -57,7 +57,7 @@ module.exports = function () {
     },
     begin: function begin() {
       var self = this;
-      scene = gfx.setUpScene(scene);
+      scene = gfx.setUpScene();
       renderer = gfx.setUpRenderer(renderer);
       camera = gfx.setUpCamera(camera);
       floor = gfx.addFloor(this.settings.floorSize, scene, this.settings.colors.worldColor, this.settings.colors.gridColor);
@@ -90,6 +90,16 @@ module.exports = function () {
       gfx.labelPoint(new THREE.Vector3(this.settings.floorSize / 2 + 1.5, 0, 0), '+X', scene, red);
       gfx.labelPoint(new THREE.Vector3(0, 0, -this.settings.floorSize / 2 - 2), '-Z', scene, red);
       gfx.labelPoint(new THREE.Vector3(0, 0, this.settings.floorSize / 2 + 4.5), '+Z', scene, red);
+      var geometry = new THREE.Geometry();
+      gfx.showPoint(new THREE.Vector3(-40, 0, -20), scene, 0xff0000);
+      geometry.vertices.push(new THREE.Vector3(-40, 0, -40), new THREE.Vector3(-20, 0, -40), new THREE.Vector3(-40, 0, -20), new THREE.Vector3(-25, 0, -25));
+      gfx.showPoints(geometry, scene, 0xff0000);
+      var testMesh = self.drawConvexFace(geometry, faceMaterial);
+      testMesh.position.set(testMesh.position.x, -.01, testMesh.position.z);
+      scene.add(testMesh);
+      var innerPoint = new THREE.Vector3(-30, 0, -30);
+      gfx.showPoint(innerPoint, scene, red);
+      gfx.pointInPolygon(innerPoint, geometry);
       self.calculatePolyloop();
     },
     drawConvexFace: function drawConvexFace(geometry, material) {
@@ -465,6 +475,7 @@ module.exports = function () {
 
 (function () {
   var appSettings;
+  var scene;
 
   window.gfx = function () {
     return {
@@ -539,12 +550,17 @@ module.exports = function () {
         });
         return new THREE.Vector3(highest.x, highest.y, highest.z);
       },
+      pointInPolygon: function pointInPolygon(pt, geometry) {
+        var raycaster = new THREE.Raycaster();
+        var rayDirection = new THREE.Vector3(10, 0, 10);
+        var testRay = raycaster.set(pt, rayDirection);
+        gfx.drawLine(pt, rayDirection.clone().setLength(1000), scene);
+      },
       getMagnitude: function getMagnitude(vector) {
         var magnitude = Math.sqrt(Math.pow(vector.x, 2) + Math.pow(vector.y, 2) + Math.pow(vector.z, 2));
         return magnitude;
       },
       getMidpoint: function getMidpoint(pt1, pt2) {
-        console.log(pt1, pt2);
         var midpoint = new THREE.Vector3();
         midpoint.x = (pt1.x + pt2.x) / 2;
         midpoint.y = (pt1.y + pt2.y) / 2;
@@ -623,7 +639,7 @@ module.exports = function () {
 
         return geometry;
       },
-      setUpScene: function setUpScene(scene, renderer) {
+      setUpScene: function setUpScene() {
         scene = new THREE.Scene();
         scene.background = new THREE.Color(0xf0f0f0);
 
@@ -766,6 +782,7 @@ module.exports = function () {
         controls.dampingFactor = 0.05;
         controls.zoomSpeed = 2;
         controls.enablePan = !utils.mobile();
+        controls.panSpeed = 1.5;
         controls.minDistance = 10;
         controls.maxDistance = 800;
         controls.maxPolarAngle = Math.PI / 2;

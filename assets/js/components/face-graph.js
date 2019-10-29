@@ -49,7 +49,7 @@ module.exports = function() {
 			
 			let self = this;
 			
-			scene = gfx.setUpScene(scene);
+			scene = gfx.setUpScene();
 			renderer = gfx.setUpRenderer(renderer);
 			camera = gfx.setUpCamera(camera);
 			floor = gfx.addFloor(this.settings.floorSize, scene, this.settings.colors.worldColor, this.settings.colors.gridColor);
@@ -86,6 +86,24 @@ module.exports = function() {
 			gfx.labelPoint(new THREE.Vector3(this.settings.floorSize/2 + 1.5, 0, 0), '+X', scene, red);
 			gfx.labelPoint(new THREE.Vector3(0, 0, -this.settings.floorSize/2 - 2), '-Z', scene, red);
 			gfx.labelPoint(new THREE.Vector3(0, 0, this.settings.floorSize/2 + 4.5), '+Z', scene, red);
+			
+			let geometry  = new THREE.Geometry();
+			gfx.showPoint(new THREE.Vector3(-40, 0, -20), scene, 0xff0000);
+			geometry.vertices.push(
+				new THREE.Vector3(-40, 0, -40),
+				new THREE.Vector3(-20, 0, -40),
+				new THREE.Vector3(-40, 0, -20),
+				new THREE.Vector3(-25, 0, -25)
+			);
+			gfx.showPoints(geometry, scene, 0xff0000);
+			let testMesh = self.drawConvexFace(geometry, faceMaterial);
+			testMesh.position.set(testMesh.position.x, -.01, testMesh.position.z);
+			scene.add(testMesh);
+			
+			let innerPoint = new THREE.Vector3(-30, 0, -30);
+			gfx.showPoint(innerPoint, scene, red);
+			
+			gfx.pointInPolygon(innerPoint, geometry);
 			
 			self.calculatePolyloop();
 		},

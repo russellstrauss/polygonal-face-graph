@@ -1,6 +1,7 @@
 (function () {
 
 	var appSettings;
+	var scene;
 	
 	window.gfx = (function() {
 		
@@ -100,14 +101,21 @@
 				return new THREE.Vector3(highest.x, highest.y, highest.z);
 			},
 			
+			pointInPolygon: function(pt, geometry) {
+				
+				let raycaster = new THREE.Raycaster();
+				let rayDirection = new THREE.Vector3(10, 0, 10);
+				let testRay = raycaster.set(pt, rayDirection);
+				
+				gfx.drawLine(pt, rayDirection.clone().setLength(1000), scene);
+			},
+			
 			getMagnitude: function(vector) {
 				let magnitude = Math.sqrt(Math.pow(vector.x, 2) + Math.pow(vector.y, 2) + Math.pow(vector.z, 2));
 				return magnitude;
 			},
 
 			getMidpoint: function(pt1, pt2) {
-				
-				console.log(pt1, pt2);
 			
 				let midpoint = new THREE.Vector3();
 				midpoint.x = (pt1.x + pt2.x) / 2;
@@ -204,7 +212,7 @@
 				return geometry;
 			},
 
-			setUpScene: function(scene, renderer) {
+			setUpScene: function() {
 
 				scene = new THREE.Scene();
 				scene.background = new THREE.Color(0xf0f0f0);
@@ -361,6 +369,7 @@
 				controls.dampingFactor = 0.05;
 				controls.zoomSpeed = 2;
 				controls.enablePan = !utils.mobile();
+				controls.panSpeed = 1.5;
 				controls.minDistance = 10;
 				controls.maxDistance = 800;
 				controls.maxPolarAngle = Math.PI / 2;
